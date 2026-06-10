@@ -209,8 +209,9 @@ const ftime=h=>Math.floor(h)+':'+(h%1?'30':'00');
 function syncProjectStatus(pid){if(!pid)return;const p=PROJECTS.find(x=>x.id===pid);if(!p)return;const ts=tasksOfProject(pid);if(!ts.length)return;if(ts.every(t=>t.estado==='Completada'))p.estado='Completada';else if(p.estado==='Completada')p.estado='En Progreso';}
 // ── Carga / rendimiento de equipo ──
 const PRI_H={Alta:8,Media:5,Baja:3};
+const JORNADA_H=44; // jornada semanal (horas) — base para cálculo de carga/burnout
 const memberTasks=mid=>TASKS.filter(t=>t.who===mid&&taskWS(t)===CURRENT_WS);
-const memberLoad=mid=>{const h=memberTasks(mid).filter(t=>t.estado!=='Completada').reduce((s,t)=>s+(PRI_H[t.prioridad]||5),0);const pct=Math.round(h/40*100);return {h,pct,flag:pct>100?'rose':pct>=80?'amber':'emerald'};};
+const memberLoad=mid=>{const h=memberTasks(mid).filter(t=>t.estado!=='Completada').reduce((s,t)=>s+(PRI_H[t.prioridad]||5),0);const pct=Math.round(h/JORNADA_H*100);return {h,pct,flag:pct>100?'rose':pct>=80?'amber':'emerald'};};
 // ── Archivos en tareas ──
 TASKS.forEach(t=>t.archivos=t.archivos||[]);
 // ── Subtareas como checklist con nombre y fecha de completado ──
@@ -450,7 +451,7 @@ function cardFunc(m,s){const l=s.load;return `<div class="rounded-xl border bord
     <span class="w-10 h-10 rounded-full bg-inst/10 text-inst grid place-items-center font-semibold">${initials(m.name)}</span>
     <div class="flex-1 min-w-0"><div class="font-semibold text-slate-800 truncate">${m.name}</div><div class="text-xs text-slate-400">${m.area} · ${s.proyectos} proy · ${s.tareas} tareas</div></div>
     <span class="text-xs px-2 py-1 rounded-full bg-${l.flag}-100 text-${l.flag}-700 font-semibold shrink-0">${l.flag==='rose'?'🔴':l.flag==='amber'?'🟡':'🟢'} ${l.pct}%</span></div>
-  <div class="flex items-center justify-between text-[11px] text-slate-500 mb-1"><span>Carga (riesgo burnout)</span><span class="tabular-nums">${l.h}h / 40h</span></div>
+  <div class="flex items-center justify-between text-[11px] text-slate-500 mb-1"><span>Carga (riesgo burnout)</span><span class="tabular-nums">${l.h}h / ${JORNADA_H}h</span></div>
   <div class="h-2 bg-slate-100 rounded-full overflow-hidden mb-3"><div class="h-full bg-${l.flag}-500" style="width:${Math.min(l.pct,100)}%"></div></div>
   <div class="grid grid-cols-4 gap-2 text-center mb-3">${miniStat('Pendientes',s.pend,'amber')}${miniStat('En progreso',s.prog,'blue')}${miniStat('Completadas',s.comp,'emerald')}${miniStat('Vencidas',s.venc,'rose')}</div>
   <div class="flex items-center gap-2 text-xs text-slate-500 border-t border-slate-100 pt-2"><span>🚦</span><span class="text-rose-600 font-medium">${s.venc} vencidas</span><span>·</span><span class="text-amber-600">${s.hoy} hoy</span><span>·</span><span>${s.prox} próx. 3 días</span></div>

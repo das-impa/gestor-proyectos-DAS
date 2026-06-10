@@ -338,7 +338,7 @@ Guía completa en **`DEPLOY.md`** (Netlify + Supabase, ~15 min). Resumen:
 7. **Login del prototipo sin hash** (solo demo).
 8. **Archivos no se suben** (solo nombre); IA no cableada en UI.
 9. **RLS aún por organización**, falta granularidad por espacio/proyecto del modelo nuevo.
-10. **Reglas de negocio como números mágicos** (pesos `PRI_H`, jornada 40 h, umbrales de burnout/ejecución, urgencia→prioridad) embebidas en el HTML — deben externalizarse a configuración (ver §23).
+10. **Reglas de negocio como números mágicos** (pesos `PRI_H`, jornada 44 h, umbrales de burnout/ejecución, urgencia→prioridad) embebidas en el HTML — deben externalizarse a configuración (ver §23).
 11. **IDs frágiles para concurrencia:** los IDs se generan por longitud de array (`'T-'+(TASKS.length+1)`) o `Date.now()` (ver §23). Sirve en single-user en memoria; en producción usar UUID/secuencia de BD para evitar colisiones.
 
 ## 20. Decisiones arquitectónicas tomadas
@@ -355,7 +355,7 @@ Guía completa en **`DEPLOY.md`** (Netlify + Supabase, ~15 min). Resumen:
 10. **Permisos por espacio/proyecto** con flujo de **aprobación del líder** para eliminar proyectos.
 11. **Estado "Vencida" es DERIVADO, no almacenado.** Se guardan 4 estados (`ESTADOS`), pero la UI muestra un 5º estado *virtual* calculado en runtime: `isVencida(t)` = `t.vence < HOY && t.estado !== 'Completada'`, y `efEstado(t)` devuelve `'Vencida'` o el estado real. El Kanban además usa `taskCol(t) = t.col || t.estado` (la columna Trello puede diferir del estado). **Al migrar:** no persistir "Vencida"; calcularla por consulta (vista/columna generada).
 12. **Re-render manual con `REDRAW` (no hay framework reactivo).** Cada pantalla, al renderizar, asigna `REDRAW = renderX`; cualquier mutación de estado llama `REDRAW()` para repintar. Las vistas de Tareas/Proyectos guardan el `getList()` activo (`WS_GET` + `rerenderView`). Un flag `DRAG` suprime el "abrir tarea" durante el arrastre. **Es la columna vertebral del prototipo**; al portar a React se reemplaza por estado reactivo + queries.
-13. **Reglas de negocio embebidas como constantes (deben externalizarse).** Ver §23: pesos de carga `PRI_H`, jornada base 40 h, umbrales de burnout y de ejecución presupuestaria, y el mapeo urgencia→prioridad. Hoy son "números mágicos" en el HTML; en producción deben ser configurables (tabla de parámetros / settings por organización), no recompilados.
+13. **Reglas de negocio embebidas como constantes (deben externalizarse).** Ver §23: pesos de carga `PRI_H`, jornada base 44 h (`JORNADA_H`), umbrales de burnout y de ejecución presupuestaria, y el mapeo urgencia→prioridad. Hoy son "números mágicos" en el HTML; en producción deben ser configurables (tabla de parámetros / settings por organización), no recompilados.
 
 ## 21. Riesgos identificados
 
@@ -389,7 +389,7 @@ Guía completa en **`DEPLOY.md`** (Netlify + Supabase, ~15 min). Resumen:
 | Regla | Valor actual (en el HTML) | Función | Nota de migración |
 |---|---|---|---|
 | **Pesos de carga por prioridad** | `PRI_H = {Alta:8, Media:5, Baja:3}` (horas) | `memberLoad` | Configurable por organización. |
-| **Jornada base** | 40 h/semana | `memberLoad` (`pct = round(h/40*100)`) | Parametrizar (jornada municipal real). |
+| **Jornada base** | **44 h/semana** (const. `JORNADA_H`) | `memberLoad` (`pct = round(h/JORNADA_H*100)`) | Jornada legal chilena; externalizar a configuración por organización. |
 | **Umbrales de burnout** | `>100%` rojo · `≥80%` ámbar · resto verde | `memberLoad.flag` | Configurable. |
 | **Ejecución presupuestaria (colores)** | `>90%` verde · `50–90%` ámbar · `<50%` rojo | dashboard + detalle proyecto | Configurable. |
 | **Semáforo de urgencia** | vencidas · hoy · próx. **3 días** | `alertList`/panel | Ventana parametrizable. |
