@@ -1,0 +1,19 @@
+# Config del sitio estático cuando Netlify usa base = prototype/
+# (seleccionar "prototype" como "Project to deploy" en el asistente).
+# Backend = Supabase (la conexión va dentro de index.html). Sin build.
+
+[build]
+  publish = "."
+  command = "echo 'sitio estatico, sin build'"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

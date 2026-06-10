@@ -1,0 +1,9 @@
+{
+  "name": "das-control-gestion-sanitaria",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DAS Control de Gestión Sanitaria — sitio estático (backend Supabase). Sin framework ni build.",
+  "scripts": {
+    "build": "echo \"Sitio estatico: nada que compilar\""
+  }
+}
