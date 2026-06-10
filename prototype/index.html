@@ -192,6 +192,8 @@ TASKS.forEach(t=>t.archivos=t.archivos||[]);
 TASKS.forEach(t=>t.checklist=(t.checklist||[]).map((x,i)=>typeof x==='object'?x:{text:'Subtarea '+(i+1),done:!!x,doneAt:x?'2026-06-08':null}));
 const ckDone=t=>(t.checklist||[]).filter(x=>x.done).length;
 const ckTotal=t=>(t.checklist||[]).length;
+// Progreso de una tarea: 100% si está Completada; si no, avance de subtareas.
+const taskProgress=t=>t.estado==='Completada'?100:(ckTotal(t)?Math.round(ckDone(t)/ckTotal(t)*100):0);
 // ── Registro de actividades ──
 let ACTIVITY=[];
 const ACT_TTL=7*24*60*60*1000; // 7 días en ms
@@ -286,12 +288,12 @@ function delWorkspace(wid){
   if(!(CURRENT.role==='admin'||CURRENT.id===w.leader))return;
   const pids=PROJECTS.filter(p=>(p.workspaceId||'ws1')===wid).map(p=>p.id);
   const nd=TASKS.filter(t=>!t.projectId&&(t.workspaceId||'ws1')===wid).length;
-  confirmModal('Eliminar espacio de trabajo','¿Seguro que deseas eliminar el espacio «'+w.name+'»? Se eliminarán también sus '+pids.length+' proyecto(s) y '+nd+' tarea(s) directa(s). Esta acción no se puede deshacer.',()=>{
-    TASKS=TASKS.filter(t=>!(pids.includes(t.projectId)||((!t.projectId)&&(t.workspaceId||'ws1')===wid)));
-    PROJECTS=PROJECTS.filter(p=>(p.workspaceId||'ws1')!==wid);
-    WORKSPACES.splice(WORKSPACES.findIndex(x=>x.id===wid),1);
-    if(CURRENT_WS===wid)CURRENT_WS=(WORKSPACES.find(x=>x.primary)||WORKSPACES[0]).id;
-    logAct('eliminó el espacio de trabajo',w.name);
+  confirmModal('Eliminar espacio de trabajo','¿Seguro que deseas eliminar el espacio «'+w.name+'»? Se eliminarán también sus '+pids.length+' proyecto(s) y '+nd+' tarea(s) directa(s). Esta acción no se puede deshacer.',async()=>{
+    const {error}=await sb.from('workspaces').delete().eq('id',wid);if(dbErr(error,'No se pudo eliminar el espacio'))return;
+    await dbAct('eliminó el espacio de trabajo',w.name);
+    await loadAll();
+    const myW=WORKSPACES.filter(x=>CURRENT.role==='admin'||x.userIds.includes(CURRENT.id));
+    if(!myW.find(x=>x.id===CURRENT_WS))CURRENT_WS=(myW.find(x=>x.primary)||myW[0]||{}).id||CURRENT_WS;
     buildNav(); renderEspacios();
   },'Eliminar espacio');
 }
@@ -305,7 +307,7 @@ function gestionarIntegrantes(wid){
     <p class="text-[11px] text-slate-400 mt-2">El líder no se puede quitar. Los integrantes verán y trabajarán en este espacio.</p>
     <div class="flex justify-end gap-2 mt-5"><button type="button" onclick="closeModal()" class="rounded-lg border border-slate-200 text-slate-600 text-sm px-4 py-2 hover:bg-slate-50">Cancelar</button><button type="submit" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm font-medium px-4 py-2">Guardar integrantes</button></div>`;
   form.querySelectorAll('.wu').forEach(b=>b.onclick=()=>{const u=b.dataset.u;if(u===w.leader)return;const i=sel.users.indexOf(u);if(i>=0)sel.users.splice(i,1);else sel.users.push(u);b.className=`wu rounded-lg border px-2.5 py-1.5 text-sm ${sel.users.includes(u)?'border-inst bg-inst text-white':'border-slate-200 text-slate-600'}`;});
-  form.onsubmit=e=>{e.preventDefault();w.userIds=[...new Set([w.leader,...sel.users].filter(Boolean))];closeModal();renderEspacios();};
+  form.onsubmit=async e=>{e.preventDefault();const ids=[...new Set([w.leader,...sel.users].filter(Boolean))];closeModal();await sb.from('workspace_members').delete().eq('workspace_id',wid);await sb.from('workspace_members').insert(ids.map(u=>({workspace_id:wid,profile_id:u})));await loadAll();buildNav();renderEspacios();};
   document.getElementById('modalBackdrop').classList.remove('hidden');
 }
 function nuevoEspacio(){
@@ -320,7 +322,7 @@ function nuevoEspacio(){
       <p class="text-[11px] text-slate-400 mt-1.5">Solo los integrantes seleccionados (y tú como líder) verán y trabajarán en este espacio.</p></div>
     <div class="flex justify-end gap-2 mt-5"><button type="button" onclick="closeModal()" class="rounded-lg border border-slate-200 text-slate-600 text-sm px-4 py-2 hover:bg-slate-50">Cancelar</button><button type="submit" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm font-medium px-4 py-2">Crear espacio</button></div>`;
   form.querySelectorAll('.wu').forEach(b=>b.onclick=()=>{const u=b.dataset.u;if(u===CURRENT.id)return;const i=sel.users.indexOf(u);if(i>=0)sel.users.splice(i,1);else sel.users.push(u);b.className=`wu rounded-lg border px-2.5 py-1.5 text-sm ${sel.users.includes(u)?'border-inst bg-inst text-white':'border-slate-200 text-slate-600'}`;});
-  form.onsubmit=e=>{e.preventDefault();const n=document.getElementById('ws_name').value.trim();if(!n){document.getElementById('ws_name').focus();return;}closeModal();WORKSPACES.push({id:'ws'+(WORKSPACES.length+1),name:n,primary:false,userIds:[...sel.users],leader:CURRENT.id});renderEspacios();};
+  form.onsubmit=async e=>{e.preventDefault();const n=document.getElementById('ws_name').value.trim();if(!n){document.getElementById('ws_name').focus();return;}closeModal();const {data:nw,error}=await sb.from('workspaces').insert({name:n,is_primary:false,leader_id:CURRENT.id}).select().single();if(dbErr(error,'No se pudo crear el espacio'))return;const ids=[...new Set([CURRENT.id,...sel.users])];await sb.from('workspace_members').insert(ids.map(u=>({workspace_id:nw.id,profile_id:u})));await dbAct('creó el espacio de trabajo',n);await loadAll();buildNav();renderEspacios();};
   document.getElementById('modalBackdrop').classList.remove('hidden');
   setTimeout(()=>document.getElementById('ws_name').focus(),40);
 }
@@ -357,8 +359,8 @@ function addBloque(){
     {name:'color',label:'Color',type:'select',options:[{v:'indigo',l:'Azul'},{v:'emerald',l:'Verde'},{v:'amber',l:'Ámbar'},{v:'rose',l:'Rojo'},{v:'violet',l:'Violeta'}],value:'indigo'},
     {name:'start',label:'Hora de inicio',type:'select',options:times,value:9},
     {name:'dur',label:'Duración',type:'select',options:[{v:0.5,l:'30 minutos'},{v:1,l:'1 hora'},{v:1.5,l:'1 hora 30 min'},{v:2,l:'2 horas'}],value:1},
-  ],d=>{const s=+d.start;TIMEBLOCKS.push({id:'tb'+Date.now(),userId:CURRENT.id,day:d.day||HOY,start:s,end:s+(+d.dur||1),title:d.title,color:d.color});renderTimebox();},'Agregar bloque');}
-function delBloque(id){const i=TIMEBLOCKS.findIndex(b=>b.id===id);if(i>=0)TIMEBLOCKS.splice(i,1);renderTimebox();}
+  ],async d=>{const s=+d.start;const {error}=await sb.from('time_blocks').insert({owner_id:CURRENT.id,day:d.day||HOY,start_h:s,end_h:s+(+d.dur||1),title:d.title,color:d.color});if(dbErr(error,'No se pudo agregar el bloque'))return;await loadAll();renderTimebox();},'Agregar bloque');}
+async function delBloque(id){await sb.from('time_blocks').delete().eq('id',id);await loadAll();renderTimebox();}
 
 // ═══ NOTAS ═══
 function renderNotes(){REDRAW=renderNotes;const mine=NOTES.filter(n=>n.userId===CURRENT.id);
@@ -372,9 +374,9 @@ function renderNotes(){REDRAW=renderNotes;const mine=NOTES.filter(n=>n.userId===
       <p class="text-sm text-slate-600 whitespace-pre-wrap">${n.body}</p>
       <div class="text-[10px] text-slate-400 mt-2">Actualizada ${fdate(n.updated)}</div></div>`).join('')||'<div class="text-sm text-slate-400 col-span-full">Sin notas. Crea la primera.</div>'}</div></div>`;
 }
-function nuevaNota(){openModal('Nueva nota',[{name:'title',label:'Título',required:true,full:true},{name:'body',label:'Contenido',type:'textarea',full:true}],d=>{NOTES.push({id:'n'+Date.now(),userId:CURRENT.id,title:d.title,body:d.body,updated:HOY});renderNotes();},'Guardar');}
-function editNota(id){const n=NOTES.find(x=>x.id===id);if(!n)return;openModal('Editar nota',[{name:'title',label:'Título',required:true,full:true,value:n.title},{name:'body',label:'Contenido',type:'textarea',full:true,value:n.body}],d=>{n.title=d.title;n.body=d.body;n.updated=HOY;renderNotes();},'Guardar');}
-function delNota(id){const i=NOTES.findIndex(x=>x.id===id);if(i>=0)NOTES.splice(i,1);renderNotes();}
+function nuevaNota(){openModal('Nueva nota',[{name:'title',label:'Título',required:true,full:true},{name:'body',label:'Contenido',type:'textarea',full:true}],async d=>{const {error}=await sb.from('notes').insert({owner_id:CURRENT.id,title:d.title,body:d.body});if(dbErr(error,'No se pudo guardar la nota'))return;await loadAll();renderNotes();},'Guardar');}
+function editNota(id){const n=NOTES.find(x=>x.id===id);if(!n)return;openModal('Editar nota',[{name:'title',label:'Título',required:true,full:true,value:n.title},{name:'body',label:'Contenido',type:'textarea',full:true,value:n.body}],async d=>{const {error}=await sb.from('notes').update({title:d.title,body:d.body,updated_at:new Date().toISOString()}).eq('id',id);if(dbErr(error,'No se pudo guardar la nota'))return;await loadAll();renderNotes();},'Guardar');}
+async function delNota(id){await sb.from('notes').delete().eq('id',id);await loadAll();renderNotes();}
 
 // ═══ REUNIONES ═══
 const MESES=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -395,14 +397,14 @@ function nuevaReunion(){openModal('Nueva reunión',[
     {name:'date',label:'Fecha',type:'date',value:HOY},{name:'time',label:'Hora',value:'10:00'},
     {name:'place',label:'Lugar',full:true,ph:'Sala de reuniones, CESFAM…'},
     {name:'notes',label:'Temario / notas',type:'textarea',full:true},
-  ],d=>{MEETINGS.push({id:'mt'+Date.now(),title:d.title,date:d.date||HOY,time:d.time||'10:00',attendees:[CURRENT.id],place:d.place,notes:d.notes,workspaceId:CURRENT_WS});renderMeetings();},'Agendar reunión');}
+  ],async d=>{const {data:row,error}=await sb.from('meetings').insert({workspace_id:CURRENT_WS,title:d.title,date:d.date||HOY,time:d.time||'10:00',place:d.place,notes:d.notes,created_by:CURRENT.id}).select().single();if(dbErr(error,'No se pudo agendar la reunión'))return;await sb.from('meeting_attendees').insert({meeting_id:row.id,profile_id:CURRENT.id});await dbAct('agendó la reunión',d.title);await loadAll();renderMeetings();},'Agendar reunión');}
 function delMeeting(id){const m=MEETINGS.find(x=>x.id===id);if(!m)return;
   if(!(CURRENT.role==='admin'||wsLeaderOf(m.workspaceId)===CURRENT.id||(m.attendees&&m.attendees[0]===CURRENT.id)))return;
-  confirmModal('Eliminar reunión','¿Seguro que deseas eliminar la reunión «'+m.title+'»? También dejará de aparecer en el Calendario.',()=>{
-    MEETINGS.splice(MEETINGS.findIndex(x=>x.id===id),1);
-    logAct('eliminó la reunión',m.title); renderMeetings();
+  confirmModal('Eliminar reunión','¿Seguro que deseas eliminar la reunión «'+m.title+'»? También dejará de aparecer en el Calendario.',async()=>{
+    const {error}=await sb.from('meetings').delete().eq('id',id);if(dbErr(error,'No se pudo eliminar la reunión'))return;
+    await dbAct('eliminó la reunión',m.title); await loadAll(); renderMeetings();
   },'Eliminar reunión');}
-function nuevoEvento(){openModal('Nuevo evento',[{name:'title',label:'Título',required:true,full:true,ph:'Ej: Feriado, hito, actividad…'},{name:'date',label:'Fecha',type:'date',value:HOY}],d=>{EVENTS.push({id:'ev'+Date.now(),title:d.title,date:d.date||HOY,workspaceId:CURRENT_WS});renderCalendarScreen();},'Agregar');}
+function nuevoEvento(){openModal('Nuevo evento',[{name:'title',label:'Título',required:true,full:true,ph:'Ej: Feriado, hito, actividad…'},{name:'date',label:'Fecha',type:'date',value:HOY}],async d=>{const {error}=await sb.from('events').insert({workspace_id:CURRENT_WS,title:d.title,date:d.date||HOY});if(dbErr(error,'No se pudo agregar el evento'))return;await loadAll();renderCalendarScreen();},'Agregar');}
 
 // ═══ RENDIMIENTO DE EQUIPO (vista líder) ═══
 const miniStat=(l,v,c)=>`<div class="rounded-lg bg-${c}-50 py-1.5"><div class="text-lg font-bold text-${c}-600 tabular-nums leading-none">${v}</div><div class="text-[10px] text-slate-500 mt-0.5">${l}</div></div>`;
@@ -683,6 +685,9 @@ function projectsTable(projs){
         </tbody></table></div></div></div>`;}).join('')||'<div class="text-sm text-slate-400 p-2">Sin proyectos en este espacio.</div>'}
   </div>`;
 }
+function editarPresupuesto(pid){const p=PROJECTS.find(x=>x.id===pid);if(!p||!canEditProject(p))return;
+  openModal('Presupuesto del proyecto',[{name:'pres',label:'Presupuesto total asignado ($)',type:'number',full:true,value:p.presupuesto||0}],
+  async d=>{const v=Math.max(+d.pres||0,0);const {error}=await sb.from('projects').update({presupuesto:v}).eq('id',pid);if(dbErr(error,'No se pudo guardar el presupuesto'))return;await dbAct('actualizó el presupuesto de',p.title);await loadAll();renderProject(pid);},'Guardar presupuesto');}
 function renderProject(pid){
   SCREEN_PROJECT=pid; REDRAW=()=>renderProject(pid);
   const p=PROJECTS.find(x=>x.id===pid); if(!p){renderProjects();return;}
@@ -702,7 +707,7 @@ function renderProject(pid){
       <span class="px-2 py-0.5 rounded-full bg-${pc}-100 text-${pc}-700 font-medium">Prioridad ${p.prioridad}</span>
       <span class="text-slate-500">👤 ${memberName(p.ownerId)}</span>
       <span class="text-slate-500">📅 ${fdate(p.inicio)}–${fdate(p.fin)}</span>
-      <span class="text-slate-500">💰 ${money(p.presupuesto)}</span></div>
+      <span class="text-slate-500">💰 ${money(p.presupuesto)}</span>${canEditProject(p)?`<button onclick="editarPresupuesto('${pid}')" class="text-inst hover:underline text-xs font-medium">✏ Editar presupuesto</button>`:''}</div>
     ${(()=>{const ex=projectGasto(p.id),pct=p.presupuesto?Math.round(ex/p.presupuesto*100):0,bc=pct>=90?'emerald':pct>=50?'amber':'rose';return `<div class="mt-2.5 max-w-lg">
       <div class="flex items-center justify-between text-xs mb-1"><span class="font-semibold text-slate-600">📊 Ejecución presupuestaria</span><span class="text-slate-500 tabular-nums">${money(ex)} / ${money(p.presupuesto)} · <b class="text-${bc}-600">${pct}%</b></span></div>
       <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-${bc}-500 transition-all" style="width:${Math.min(pct,100)}%"></div></div>
@@ -840,7 +845,7 @@ function viewTable(list){
       <th class="text-left font-semibold p-3">Tarea</th><th class="font-semibold p-3">Responsable</th>
       <th class="font-semibold p-3">Estado</th><th class="font-semibold p-3">Prioridad</th>
       <th class="font-semibold p-3">Vence</th><th class="font-semibold p-3">Presupuesto</th><th class="font-semibold p-3 pr-4">Progreso</th></tr></thead>
-    <tbody>${list.length?list.map(t=>{const ec=estadoColor[efEstado(t)],pc=prioColor[t.prioridad];const done=ckDone(t),tot=ckTotal(t);const pct=tot?Math.round(done/tot*100):0;
+    <tbody>${list.length?list.map(t=>{const ec=estadoColor[efEstado(t)],pc=prioColor[t.prioridad];const done=ckDone(t),tot=ckTotal(t);const pct=taskProgress(t);
       return `<tr class="task-row border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer" data-key="${t.key}">
         <td class="p-3"><div class="font-medium text-slate-700">${t.title}</div><div class="font-mono text-[10px] text-slate-400">${t.key}</div></td>
         <td class="p-3 text-center"><span class="w-7 h-7 inline-grid place-items-center rounded-full bg-inst/10 text-inst text-[10px] font-semibold" title="${memberName(t.who)}">${memberName(t.who).slice(0,2)}</span></td>
@@ -848,7 +853,7 @@ function viewTable(list){
         <td class="p-2.5 text-center"><span class="inline-block min-w-[64px] px-2.5 py-1.5 rounded-md bg-${pc}-500 text-white text-[11px] font-semibold">${t.prioridad}</span></td>
         <td class="p-3 text-center text-xs ${isVencida(t)?'text-rose-600 font-semibold':'text-slate-500'}">${fdate(t.vence)}</td>
         <td class="p-3 text-center text-xs text-slate-500 tabular-nums">${money(t.presupuesto)}</td>
-        <td class="p-3 pr-4"><div class="flex items-center gap-2"><div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-emerald-500" style="width:${pct}%"></div></div><span class="text-[10px] text-slate-400 w-8 shrink-0">${tot?done+'/'+tot:'—'}</span></div></td>
+        <td class="p-3 pr-4"><div class="flex items-center gap-2"><div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-emerald-500" style="width:${pct}%"></div></div><span class="text-[10px] text-slate-400 w-8 shrink-0">${t.estado==='Completada'?'100%':(tot?done+'/'+tot:'—')}</span></div></td>
       </tr>`;}).join(''):'<tr><td colspan="7" class="p-6 text-center text-sm text-slate-400">Sin tareas.</td></tr>'}</tbody></table></div>
     <button onclick="addTask()" class="w-full text-left text-sm text-slate-500 hover:text-inst px-4 py-2.5 border-t border-slate-100">+ Añadir tarea</button>
   </div></div>`;
@@ -1230,32 +1235,14 @@ function delUser(id){
   const leadsWs=WORKSPACES.find(w=>w.leader===id);
   if(leadsWs){confirmModal('Acción no permitida','«'+m.name+'» es líder del espacio «'+leadsWs.name+'». Cambia el líder o elimina ese espacio antes de eliminar al usuario.',()=>{},'Entendido');return;}
   const np=PROJECTS.filter(p=>p.ownerId===id).length, nt=TASKS.filter(t=>t.who===id).length;
-  confirmModal('Eliminar usuario','¿Seguro que deseas eliminar a «'+m.name+'»? '+((np||nt)?'Tiene '+np+' proyecto(s) y '+nt+' tarea(s) asignada(s) que quedarán sin responsable. ':'')+'Esta acción no se puede deshacer.',()=>{
-    MEMBERS.splice(MEMBERS.findIndex(x=>x.id===id),1);
-    WORKSPACES.forEach(w=>{const i=w.userIds.indexOf(id);if(i>=0)w.userIds.splice(i,1);});
-    const ui=USERS.findIndex(u=>u.id===id);if(ui>=0)USERS.splice(ui,1);
-    logAct('eliminó al usuario',m.name); renderUsers();
+  confirmModal('Eliminar usuario','¿Seguro que deseas eliminar a «'+m.name+'»? '+((np||nt)?'Tiene '+np+' proyecto(s) y '+nt+' tarea(s) asignada(s) que quedarán sin responsable. ':'')+'El usuario perderá el acceso. Esta acción no se puede deshacer.',async()=>{
+    const {error}=await sb.from('profiles').delete().eq('id',id);if(dbErr(error,'No se pudo eliminar el usuario'))return;
+    await dbAct('eliminó al usuario',m.name); await loadAll(); renderUsers();
   },'Eliminar usuario');
 }
 function nuevoUsuario(){
   if(CURRENT.role!=='admin'){confirmModal('Acción no permitida','Solo un administrador puede crear usuarios.',()=>{},'Entendido');return;}
-  openModal('Nuevo usuario',[
-    {name:'name',label:'Nombre',required:true,full:true},
-    {name:'cargo',label:'Cargo',full:true,ph:'Ej: Encargada de Salud APS, Profesional SECPLAC…'},
-    {name:'area',label:'Área',type:'select',options:AREAS,value:'Salud'},
-    {name:'role',label:'Rol',type:'select',options:['Funcionario','Directivo'],value:'Funcionario'},
-    {name:'email',label:'Correo institucional (acceso)',required:true,full:true,ph:'usuario@gestionsanitaria.cl'},
-    {name:'pass',label:'Contraseña inicial',required:true,full:true,ph:'El usuario podrá cambiarla luego'},
-  ],d=>{
-    const email=(d.email||'').trim().toLowerCase(), pass=(d.pass||'').trim();
-    if(email&&USERS.find(u=>u.email.toLowerCase()===email.toLowerCase())){confirmModal('Correo en uso','Ya existe una cuenta con «'+email+'». Usa otro correo institucional.',()=>{},'Entendido');return;}
-    const id='m'+Date.now();
-    MEMBERS.push({id,name:d.name,cargo:d.cargo||'',role:d.role,area:d.area});
-    if(email&&pass)USERS.push({id,name:d.name,email,pass,role:d.role==='Directivo'?'admin':'user'});
-    const ws=WORKSPACES.find(w=>w.id===CURRENT_WS); if(ws&&!ws.userIds.includes(id))ws.userIds.push(id);
-    logAct('creó al usuario',d.name);
-    renderUsers();
-  },'Crear usuario');
+  confirmModal('Crear usuario','La creación de cuentas con acceso se habilitará en el siguiente paso (función servidor). Por ahora, agrega al usuario desde el panel de Supabase → <b>Authentication → Add user</b> (correo + contraseña + Auto Confirm). Aparecerá aquí automáticamente y podrás asignarle cargo, área y espacio.',()=>{},'Entendido');
 }
 
 // ═══════════════ PANEL DE DETALLE DE TAREA ═══════════════
@@ -1305,22 +1292,22 @@ function openTask(key){const t=TASKS.find(x=>x.key===key);if(!t)return;if(!t._c)
   document.getElementById('taskBackdrop').classList.remove('hidden');
   panel.classList.remove('translate-x-full');
   const u=()=>{REDRAW();};
-  document.getElementById('t_title').onchange=e=>{t.title=e.target.value;u();};
-  document.getElementById('t_e').onchange=e=>{t.estado=e.target.value;t.done=(e.target.value==='Completada');syncProjectStatus(t.projectId);u();};
-  document.getElementById('t_w').onchange=e=>{t.who=e.target.value;u();};
-  document.getElementById('t_p').onchange=e=>{t.prioridad=e.target.value;u();};
-  document.getElementById('t_v').onchange=e=>{t.vence=e.target.value||null;u();};
-  document.getElementById('t_b').onchange=e=>{t.presupuesto=+e.target.value||0;};
-  document.getElementById('t_d').onchange=e=>{t.desc=e.target.value;};
-  panel.querySelectorAll('.ck').forEach(c=>c.onchange=()=>{const it=t.checklist[+c.dataset.i];it.done=c.checked;it.doneAt=c.checked?HOY:null;openTask(key);u();});
-  panel.querySelectorAll('.cktext').forEach(inp=>inp.onchange=()=>{t.checklist[+inp.dataset.ti].text=inp.value;u();});
-  panel.querySelectorAll('.ckdel').forEach(b=>b.onclick=()=>{t.checklist.splice(+b.dataset.di,1);openTask(key);u();});
+  document.getElementById('t_title').onchange=e=>{t.title=e.target.value;saveTask(t,{title:t.title});u();};
+  document.getElementById('t_e').onchange=e=>{t.estado=e.target.value;t.done=(e.target.value==='Completada');syncProjectStatus(t.projectId);saveTask(t,{estado:t.estado,done:t.done});if(t.projectId)saveProjEstado(t.projectId);u();};
+  document.getElementById('t_w').onchange=e=>{t.who=e.target.value;saveTask(t,{assignee_id:t.who});u();};
+  document.getElementById('t_p').onchange=e=>{t.prioridad=e.target.value;saveTask(t,{prioridad:t.prioridad});u();};
+  document.getElementById('t_v').onchange=e=>{t.vence=e.target.value||null;saveTask(t,{vence:t.vence});u();};
+  document.getElementById('t_b').onchange=e=>{t.presupuesto=+e.target.value||0;saveTask(t,{presupuesto:t.presupuesto});};
+  document.getElementById('t_d').onchange=e=>{t.desc=e.target.value;saveTask(t,{descripcion:t.desc});};
+  panel.querySelectorAll('.ck').forEach(c=>c.onchange=()=>{const it=t.checklist[+c.dataset.i];it.done=c.checked;it.doneAt=c.checked?HOY:null;saveSubs(t);openTask(key);u();});
+  panel.querySelectorAll('.cktext').forEach(inp=>inp.onchange=()=>{t.checklist[+inp.dataset.ti].text=inp.value;saveSubs(t);u();});
+  panel.querySelectorAll('.ckdel').forEach(b=>b.onclick=()=>{t.checklist.splice(+b.dataset.di,1);saveSubs(t);openTask(key);u();});
   document.getElementById('t_addck').onclick=()=>{t.checklist.push({text:'',done:false,doneAt:null});openTask(key);setTimeout(()=>{const ins=panel.querySelectorAll('.cktext');ins[ins.length-1]&&ins[ins.length-1].focus();},20);};
-  document.getElementById('t_cs').onclick=()=>{const i=document.getElementById('t_ci');if(i.value.trim()){t._c.push({w:CURRENT.name.split(' ')[0],t:i.value.trim()});t.comments=(t.comments||0)+1;}u();closeTask();};
-  document.getElementById('g_add').onclick=()=>{const m=+document.getElementById('g_monto').value;if(!m)return;const dsc=document.getElementById('g_desc').value.trim();(t.gastos=t.gastos||[]).push({monto:m,desc:dsc||'Gasto',fecha:HOY});logAct('registró un gasto en',t.title);openTask(key);u();};
-  panel.querySelectorAll('.gdel').forEach(b=>b.onclick=()=>{t.gastos.splice(+b.dataset.gi,1);openTask(key);u();});
-  const fileIn=document.getElementById('t_file'); if(fileIn)fileIn.onchange=e=>{[...e.target.files].forEach(f=>(t.archivos=t.archivos||[]).push({name:f.name,size:f.size}));logAct('adjuntó un archivo a',t.title);openTask(key);u();};
-  panel.querySelectorAll('.fdel').forEach(b=>b.onclick=()=>{t.archivos.splice(+b.dataset.fi,1);openTask(key);u();});
+  document.getElementById('t_cs').onclick=async()=>{const i=document.getElementById('t_ci');if(i.value.trim()){const txt=i.value.trim();t._c.push({w:CURRENT.name.split(' ')[0],t:txt});t.comments=(t.comments||0)+1;try{await sb.from('task_observations').insert({task_id:t.id,author_id:CURRENT.id,author_name:CURRENT.name.split(' ')[0],text:txt});}catch(e){}}u();closeTask();};
+  document.getElementById('g_add').onclick=()=>{const m=+document.getElementById('g_monto').value;if(!m)return;const dsc=document.getElementById('g_desc').value.trim();(t.gastos=t.gastos||[]).push({monto:m,desc:dsc||'Gasto',fecha:HOY});saveGastos(t);dbAct('registró un gasto en',t.title);openTask(key);u();};
+  panel.querySelectorAll('.gdel').forEach(b=>b.onclick=()=>{t.gastos.splice(+b.dataset.gi,1);saveGastos(t);openTask(key);u();});
+  const fileIn=document.getElementById('t_file'); if(fileIn)fileIn.onchange=e=>{[...e.target.files].forEach(f=>(t.archivos=t.archivos||[]).push({name:f.name,size:f.size}));saveFiles(t);dbAct('adjuntó un archivo a',t.title);openTask(key);u();};
+  panel.querySelectorAll('.fdel').forEach(b=>b.onclick=()=>{t.archivos.splice(+b.dataset.fi,1);saveFiles(t);openTask(key);u();});
 }
 function closeTask(){document.getElementById('taskPanel').classList.add('translate-x-full');document.getElementById('taskBackdrop').classList.add('hidden');}
 
@@ -1391,9 +1378,9 @@ function clearAlerts(e){if(e)e.stopPropagation();alertList().forEach(a=>DISMISSE
 function toggleDark(e){if(e)e.stopPropagation();DARK=!DARK;document.body.classList.toggle('dark',DARK);buildUserMenu();}
 function perfilConfig(){closeMenus();const m=MEMBERS.find(x=>x.id===CURRENT.id)||{};const em=(USERS.find(u=>u.id===CURRENT.id)||{}).email||'';
   openModal('Configuración de Perfil',[{name:'name',label:'Nombre',full:true,value:CURRENT.name},{name:'cargo',label:'Cargo',full:true,value:m.cargo||''},{name:'email',label:'Correo institucional',full:true,value:em}],
-  d=>{CURRENT.name=d.name;if(m.id){m.name=d.name;m.cargo=d.cargo;}document.getElementById('userName').textContent=d.name;},'Guardar cambios');}
-function cambiarPass(){closeMenus();openModal('Cambiar Contraseña',[{name:'a',label:'Contraseña actual',type:'password',full:true},{name:'b',label:'Nueva contraseña',type:'password',full:true},{name:'c',label:'Confirmar nueva contraseña',type:'password',full:true}],
-  d=>{const u=USERS.find(x=>x.id===CURRENT.id);if(u&&d.b)u.pass=d.b;},'Actualizar contraseña');}
+  async d=>{CURRENT.name=d.name;document.getElementById('userName').textContent=d.name;const {error}=await sb.from('profiles').update({name:d.name,cargo:d.cargo}).eq('id',CURRENT.id);if(dbErr(error,'No se pudo guardar el perfil'))return;await loadAll();},'Guardar cambios');}
+function cambiarPass(){closeMenus();openModal('Cambiar Contraseña',[{name:'b',label:'Nueva contraseña',type:'password',full:true},{name:'c',label:'Confirmar nueva contraseña',type:'password',full:true}],
+  async d=>{if(!d.b)return;if(d.b!==d.c){confirmModal('No coincide','La nueva contraseña y su confirmación no coinciden.',()=>{},'Entendido');return;}const {error}=await sb.auth.updateUser({password:d.b});if(error){confirmModal('Error',error.message,()=>{},'Entendido');return;}confirmModal('Listo','Tu contraseña fue actualizada correctamente.',()=>{},'Entendido');},'Actualizar contraseña');}
 
 function showApp(){
   document.getElementById('login').classList.add('hidden');
@@ -1425,6 +1412,11 @@ async function loadAll(){
 }
 async function dbAct(action,obj){ try{ await sb.from('activities').insert({actor_id:CURRENT.id, action, object_text:obj}); }catch(e){} }
 function dbErr(error,msg){ if(error){ confirmModal('No se pudo guardar', (msg||'Ocurrió un error')+': '+error.message, ()=>{}, 'Entendido'); return true; } return false; }
+async function saveTask(t,fields){ try{ await sb.from('tasks').update(fields).eq('id',t.id); }catch(e){console.warn('saveTask',e);} }
+async function saveProjEstado(pid){ const p=PROJECTS.find(x=>x.id===pid); if(p) try{ await sb.from('projects').update({estado:p.estado}).eq('id',pid); }catch(e){} }
+async function saveSubs(t){ try{ await sb.from('subtasks').delete().eq('task_id',t.id); if((t.checklist||[]).length) await sb.from('subtasks').insert(t.checklist.map((s,i)=>({task_id:t.id,text:s.text||'',done:!!s.done,done_at:s.doneAt||null,position:i}))); }catch(e){console.warn('saveSubs',e);} }
+async function saveGastos(t){ try{ await sb.from('task_expenses').delete().eq('task_id',t.id); if((t.gastos||[]).length) await sb.from('task_expenses').insert(t.gastos.map(g=>({task_id:t.id,monto:g.monto,descripcion:g.desc,fecha:g.fecha}))); }catch(e){console.warn('saveGastos',e);} }
+async function saveFiles(t){ try{ await sb.from('task_files').delete().eq('task_id',t.id); if((t.archivos||[]).length) await sb.from('task_files').insert(t.archivos.map(f=>({task_id:t.id,name:f.name,size:f.size}))); }catch(e){} }
 async function afterAuth(uid){
   const {data:prof}=await sb.from('profiles').select('*').eq('id',uid).single();
   if(!prof){return false;}
