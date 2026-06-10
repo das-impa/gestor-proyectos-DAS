@@ -59,7 +59,7 @@
         <img src="logo-municipalidad.png" alt="Logo" class="h-20 sm:h-24 object-contain"
           onerror="this.style.display='none'" />
       </div>
-      <h1 class="font-poppins text-white text-2xl font-extrabold tracking-tight">Control de Gestión</h1>
+      <h1 class="font-poppins text-white text-2xl font-extrabold tracking-tight">DAS Control de Gestión Sanitaria</h1>
       <p class="text-blue-200 text-[11px] tracking-[0.22em] uppercase mt-1">Ilustre Municipalidad de Pozo Almonte</p>
     </div>
     <div class="bg-white px-8 sm:px-12 py-8">
@@ -67,21 +67,16 @@
       <form id="loginForm" class="space-y-4">
         <div>
           <label class="block text-xs font-semibold tracking-wide text-slate-500 uppercase mb-1.5">Correo institucional</label>
-          <input id="loginEmail" type="email" value="admin@gestionsanitaria.cl" required placeholder="usuario@municipio.cl"
+          <input id="loginEmail" type="email" value="" required placeholder="usuario@municipio.cl" autocomplete="off"
             class="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none focus:border-inst focus:ring-2 focus:ring-inst/15" />
         </div>
         <div>
           <label class="block text-xs font-semibold tracking-wide text-slate-500 uppercase mb-1.5">Contraseña</label>
-          <input id="loginPass" type="password" value="admin123" required placeholder="••••••••"
+          <input id="loginPass" type="password" value="" required placeholder="••••••••" autocomplete="off"
             class="w-full rounded-lg border border-slate-200 bg-[#eef2ff] px-4 py-3 text-sm text-slate-800 outline-none focus:border-inst focus:ring-2 focus:ring-inst/15" />
         </div>
         <p id="loginError" class="text-sm text-rose-500 hidden"></p>
         <button type="submit" class="w-full rounded-lg bg-inst hover:bg-inst-dark text-white font-bold uppercase tracking-wide py-3 transition-colors">Iniciar sesión</button>
-        <div class="text-[11px] text-slate-400 space-y-1 pt-3 border-t border-slate-100">
-          <div class="font-medium text-slate-500">Cuentas demo (clic para autocompletar):</div>
-          <button type="button" data-fill="admin@gestionsanitaria.cl|admin123" class="fill block hover:text-inst">🛡 Directivo — admin@gestionsanitaria.cl / admin123</button>
-          <button type="button" data-fill="ana@gestionsanitaria.cl|user123" class="fill block hover:text-inst">👤 Funcionario — ana@gestionsanitaria.cl / user123</button>
-        </div>
       </form>
     </div>
     <div class="bg-slate-50 text-center text-xs text-slate-400 py-3 px-8 border-t border-slate-100">Sistema de uso exclusivo del personal autorizado</div>
@@ -91,24 +86,33 @@
 <!-- ░░ APP ░░ -->
 <div id="app" class="hidden h-screen flex flex-col">
 <div class="h-1 bg-inst-gold shrink-0"></div>
-<header class="h-14 bg-white border-b border-slate-200 flex items-center px-4 gap-3 shrink-0">
-  <div class="flex items-center gap-2 font-semibold text-slate-800 w-52 shrink-0">
-    <img src="logo-municipalidad.png" class="h-8 object-contain" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'✚',className:'grid place-items-center w-7 h-7 rounded-lg bg-inst text-white text-sm'}))"/>
-  </div>
-  <div class="flex-1 max-w-md relative">
-    <div class="flex items-center gap-2 px-3 h-9 rounded-lg bg-slate-100 border border-slate-200 focus-within:border-inst focus-within:bg-white text-sm">
-      <span class="text-slate-400">🔍</span><input id="searchInput" placeholder="Buscar proyectos, tareas, personas…" class="flex-1 bg-transparent outline-none text-slate-700 placeholder-slate-400"/></div>
-    <div id="searchMenu" class="hidden absolute left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-slate-200 z-[55] overflow-hidden max-h-96 overflow-y-auto"></div>
+<header class="h-16 bg-white border-b border-slate-200 flex items-center px-5 gap-4 shrink-0">
+  <!-- Logo + bloque institucional -->
+  <div class="flex items-center gap-3 shrink-0">
+    <img src="logo-municipalidad.png" class="h-9 object-contain" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'✚',className:'grid place-items-center w-8 h-8 rounded-lg bg-inst text-white text-sm'}))"/>
+    <div class="leading-tight border-l border-slate-200 pl-3 hidden sm:block">
+      <div class="text-[10px] font-bold uppercase tracking-[0.12em] text-orange-600">Portal Institucional</div>
+      <div class="text-sm font-bold text-inst -mt-0.5">Ilustre Municipalidad de Pozo Almonte</div>
+      <div class="text-[11px] text-slate-400">Plataforma de Control de Gestión</div>
+    </div>
   </div>
   <div class="flex-1"></div>
+  <!-- Buscador compacto -->
+  <div class="w-56 max-w-[40vw] relative hidden md:block">
+    <div class="flex items-center gap-2 px-3 h-9 rounded-lg bg-slate-100 border border-slate-200 focus-within:border-inst focus-within:bg-white text-sm">
+      <span class="text-slate-400">🔍</span><input id="searchInput" placeholder="Buscar…" class="flex-1 bg-transparent outline-none text-slate-700 placeholder-slate-400"/></div>
+    <div id="searchMenu" class="hidden absolute left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-slate-200 z-[55] overflow-hidden max-h-96 overflow-y-auto"></div>
+  </div>
+  <!-- Campana -->
   <div class="relative">
-    <button id="bellBtn" class="relative w-9 h-9 grid place-items-center rounded-lg hover:bg-slate-100 text-slate-500">🔔<span id="bellBadge" class="hidden absolute top-1 right-1 min-w-[15px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold grid place-items-center"></span></button>
+    <button id="bellBtn" class="relative w-9 h-9 grid place-items-center rounded-lg hover:bg-slate-100 text-slate-500" title="Alertas"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="w-[22px] h-[22px]"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg><span id="bellBadge" class="hidden absolute top-0.5 right-0.5 min-w-[15px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold grid place-items-center"></span></button>
     <div id="bellMenu" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-slate-200 z-[55] overflow-hidden"></div>
   </div>
+  <!-- Usuario -->
   <div class="relative">
-    <button id="userBtn" class="flex items-center gap-2.5 rounded-lg hover:bg-slate-100 pl-2 pr-1 py-1">
-      <div class="text-right leading-tight hidden sm:block"><div id="userName" class="text-xs font-medium text-slate-700"></div><div id="userRole" class="text-[10px] text-amber-500 font-semibold uppercase"></div></div>
-      <div id="userAvatar" class="w-8 h-8 rounded-full bg-inst/10 text-inst grid place-items-center text-xs font-semibold"></div>
+    <button id="userBtn" class="flex items-center gap-2.5 rounded-lg hover:bg-slate-100 pl-2 pr-1.5 py-1">
+      <div class="text-right leading-tight hidden sm:block"><div id="userName" class="text-sm font-semibold text-slate-700"></div><div id="userRole" class="text-[10px] text-orange-600 font-bold uppercase tracking-wide"></div></div>
+      <div id="userAvatar" class="w-9 h-9 rounded-full border border-slate-300 text-slate-500 grid place-items-center"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg></div>
     </button>
     <div id="userMenu" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-2xl border border-slate-200 z-[55] overflow-hidden"></div>
   </div>
@@ -143,56 +147,21 @@ const estadoColor={'Pendiente':'slate','En Progreso':'blue','En Revisión':'viol
 const prioColor={'Alta':'rose','Media':'amber','Baja':'emerald'};
 const labelColor=l=>({Salud:'emerald',Urgente:'rose',Terreno:'amber',Interno:'sky',Documental:'violet',Municipio:'blue'}[l]||'slate');
 
+// ── Plan piloto: arranque en cero. Solo el usuario maestro. ──
 let MEMBERS=[
-  {id:'dir', name:'Fabricio Céspedes', role:'Directivo',   area:'Dirección',       cargo:'Director de Gestión'},
-  {id:'ana', name:'Ana Soto',          role:'Funcionario', area:'Salud',           cargo:'Encargada de Salud APS'},
-  {id:'luis',name:'Luis Páez',         role:'Funcionario', area:'SECPLAC',         cargo:'Profesional SECPLAC'},
-  {id:'marta',name:'Marta Díaz',       role:'Funcionario', area:'Comunicaciones',  cargo:'Periodista'},
-  {id:'jon', name:'Jon Reyes',         role:'Funcionario', area:'Informática',     cargo:'Soporte TI'},
+  {id:'admin', name:'Administrador', role:'Directivo', area:'Dirección', cargo:'Administrador del sistema'},
 ];
-let PROJECTS=[
-  {id:'p1',title:'Implementación REM APS',      ownerId:'ana', estado:'En Progreso', prioridad:'Alta',  inicio:'2026-06-01', fin:'2026-06-30', presupuesto:5000000, etiquetas:['Salud'], color:'emerald'},
-  {id:'p2',title:'Plan de Inversión SECPLAC 2026',ownerId:'luis',estado:'Pendiente',  prioridad:'Alta',  inicio:'2026-06-05', fin:'2026-07-15', presupuesto:18000000,etiquetas:['Interno'], color:'blue'},
-  {id:'p3',title:'Campaña Invierno',            ownerId:'marta',estado:'En Progreso', prioridad:'Media', inicio:'2026-06-03', fin:'2026-06-20', presupuesto:2500000, etiquetas:['Documental'], color:'amber'},
-  {id:'p4',title:'Migración sistema interno',   ownerId:'jon', estado:'En Revisión', prioridad:'Alta',  inicio:'2026-05-20', fin:'2026-06-12', presupuesto:7000000, etiquetas:['Interno'], color:'violet'},
-  {id:'p5',title:'Operativo rural de salud',    ownerId:'ana', estado:'Pendiente',   prioridad:'Media', inicio:'2026-06-10', fin:'2026-06-25', presupuesto:1800000, etiquetas:['Salud','Terreno'], color:'rose'},
-];
-let TASKS=[
-  // p1
-  {key:'T-1', title:'Diseñar informe ejecutivo REM',  projectId:'p1', who:'ana', estado:'En Progreso', prioridad:'Alta', vence:'2026-06-09', presupuesto:0, etiquetas:['Salud'], checklist:[1,1,1,0,0], comments:2, origin:'propia'},
-  {key:'T-2', title:'Capacitar personal en plataforma',projectId:'p1', who:'ana', estado:'Pendiente',  prioridad:'Media',vence:'2026-06-18', presupuesto:0, etiquetas:['Salud'], checklist:[1,0,0], comments:0, origin:'propia'},
-  {key:'T-3', title:'Validar datos del mes',          projectId:'p1', who:'ana', estado:'En Revisión', prioridad:'Alta', vence:'2026-06-11', presupuesto:0, etiquetas:['Salud','Documental'], checklist:[1,1], comments:1, origin:'propia'},
-  // p3
-  {key:'T-4', title:'Diseñar piezas gráficas',        projectId:'p3', who:'marta',estado:'En Progreso',prioridad:'Media',vence:'2026-06-14', presupuesto:0, etiquetas:['Documental'], checklist:[1,1,0], comments:1, origin:'propia'},
-  {key:'T-5', title:'Coordinar pauta radial',         projectId:'p3', who:'marta',estado:'Pendiente',  prioridad:'Baja', vence:'2026-06-19', presupuesto:300000, etiquetas:[], checklist:[], comments:0, origin:'propia'},
-  // p4
-  {key:'T-6', title:'Respaldar base de datos',        projectId:'p4', who:'jon', estado:'Completada', prioridad:'Alta', vence:'2026-06-05', presupuesto:0, etiquetas:['Interno'], checklist:[1,1,1], comments:2, origin:'propia'},
-  {key:'T-7', title:'Migrar usuarios al nuevo sistema',projectId:'p4', who:'jon', estado:'En Revisión', prioridad:'Alta', vence:'2026-06-10', presupuesto:0, etiquetas:['Interno'], checklist:[1,1,0], comments:3, origin:'propia'},
-  // p2
-  {key:'T-8', title:'Recopilar iniciativas por unidad',projectId:'p2', who:'luis',estado:'Pendiente',  prioridad:'Alta', vence:'2026-06-12', presupuesto:0, etiquetas:['Interno'], checklist:[], comments:0, origin:'propia'},
-  // p5
-  {key:'T-9', title:'Agendar rondas rurales',         projectId:'p5', who:'ana', estado:'Pendiente',  prioridad:'Media',vence:'2026-06-22', presupuesto:0, etiquetas:['Terreno'], checklist:[1,0], comments:0, origin:'propia'},
-  // Instrucciones del directivo (sin proyecto)
-  {key:'INS-1',title:'Enviar reporte mensual a Dirección Regional', projectId:null, who:'ana', estado:'Pendiente', prioridad:'Alta', vence:'2026-06-11', presupuesto:0, etiquetas:['Urgente'], checklist:[], comments:0, origin:'instruccion', enviadaPor:'Fabricio Céspedes'},
-  {key:'INS-2',title:'Revisar presupuesto Q3 SECPLAC', projectId:null, who:'luis', estado:'Pendiente', prioridad:'Media', vence:'2026-06-13', presupuesto:0, etiquetas:[], checklist:[], comments:0, origin:'instruccion', enviadaPor:'Fabricio Céspedes'},
-];
+let PROJECTS=[];
+let TASKS=[];
 let USERS=[
-  {id:'dir', name:'Fabricio Céspedes', email:'admin@gestionsanitaria.cl', pass:'admin123', role:'admin'},
-  {id:'ana', name:'Ana Soto',          email:'ana@gestionsanitaria.cl',   pass:'user123', role:'user'},
-  {id:'luis',name:'Luis Páez',         email:'luis@gestionsanitaria.cl',  pass:'user123', role:'user'},
+  {id:'admin', name:'Administrador', email:'admin@gestionsanitaria.cl', pass:'admin123', role:'admin'},
 ];
-let CURRENT=null, REDRAW=()=>{}, WVIEW='table', PVIEW='table', SCREEN_PROJECT=null, CURRENT_WS='ws1', FILTER={estado:'',prioridad:''};
+let CURRENT=null, REDRAW=()=>{}, WVIEW='table', PVIEW='table', SCREEN_PROJECT=null, CURRENT_WS='ws1', FILTER={estado:'',prioridad:'',who:''};
 let WORKSPACES=[
-  {id:'ws1',name:'Principal',primary:true, userIds:['dir','ana','luis','marta','jon'], leader:'dir'},
-  {id:'ws2',name:'Salud APS', primary:false,userIds:['dir','ana'], leader:'dir'},
+  {id:'ws1',name:'Principal',primary:true, userIds:['admin'], leader:'admin'},
 ];
 const wsLeaderOf=wid=>(WORKSPACES.find(w=>w.id===wid)||{}).leader;
 PROJECTS.forEach(p=>p.workspaceId=p.workspaceId||'ws1');
-['p1','p5'].forEach(id=>{const p=PROJECTS.find(x=>x.id===id);if(p)p.workspaceId='ws2';});
-TASKS.push(
-  {key:'D-1',title:'Responder oficio de Contraloría',projectId:null,who:'dir',estado:'Pendiente',prioridad:'Alta',vence:'2026-06-10',presupuesto:0,etiquetas:['Municipio'],checklist:[],comments:0,origin:'directa',workspaceId:'ws1'},
-  {key:'D-2',title:'Revisar acta de reunión semanal',projectId:null,who:'dir',estado:'En Progreso',prioridad:'Media',vence:'2026-06-11',presupuesto:0,etiquetas:['Interno'],checklist:[1,0],comments:0,origin:'directa',workspaceId:'ws1'},
-);
 const wsName=id=>WORKSPACES.find(w=>w.id===id)?.name||'—';
 const taskWS=t=>t.projectId?(PROJECTS.find(p=>p.id===t.projectId)?.workspaceId||'ws1'):(t.workspaceId||'ws1');
 const visibleProjects=()=>PROJECTS.filter(p=>(p.workspaceId||'ws1')===CURRENT_WS&&(CURRENT.role==='admin'||p.ownerId===CURRENT.id||(p.usuarios||[]).includes(CURRENT.id)));
@@ -219,29 +188,18 @@ TASKS.forEach(t=>t.checklist=(t.checklist||[]).map((x,i)=>typeof x==='object'?x:
 const ckDone=t=>(t.checklist||[]).filter(x=>x.done).length;
 const ckTotal=t=>(t.checklist||[]).length;
 // ── Registro de actividades ──
-let ACTIVITY=[
-  {who:'ana', action:'completó la tarea',          obj:'Respaldar base de datos', ts:'Hace 2 h'},
-  {who:'luis',action:'creó la tarea',              obj:'Recopilar iniciativas por unidad', ts:'Hace 3 h'},
-  {who:'dir', action:'envió una instrucción a Ana',obj:'Enviar reporte mensual', ts:'Hace 5 h'},
-  {who:'jon', action:'registró un gasto en',       obj:'Migrar usuarios al nuevo sistema', ts:'Ayer'},
-];
-const logAct=(action,obj)=>ACTIVITY.unshift({who:CURRENT?CURRENT.id:'dir',action,obj,ts:'Ahora'});
+let ACTIVITY=[];
+const ACT_TTL=7*24*60*60*1000; // 7 días en ms
+const purgeActivity=()=>{const now=Date.now();for(let i=ACTIVITY.length-1;i>=0;i--){if(ACTIVITY[i].at&&now-ACTIVITY[i].at>ACT_TTL)ACTIVITY.splice(i,1);}};
+const relTime=a=>{if(!a.at)return a.ts||'';const h=Math.floor((Date.now()-a.at)/3600000);if(h<1)return 'Recién';if(h<24)return 'Hace '+h+' h';const d=Math.floor(h/24);return d===1?'Ayer':'Hace '+d+' días';};
+const logAct=(action,obj)=>{ACTIVITY.unshift({who:CURRENT?CURRENT.id:'admin',action,obj,ts:'Ahora',at:Date.now()});purgeActivity();};
 // ── Time Boxing (agenda personal) ──
 let TBVIEW='day';
-let TIMEBLOCKS=[
-  {id:'tb1',userId:'dir', day:'2026-06-09',start:9, end:11,title:'Revisar instrucciones',color:'indigo'},
-  {id:'tb2',userId:'dir', day:'2026-06-09',start:14,end:16,title:'Reunión SECPLAC',color:'amber'},
-  {id:'tb3',userId:'ana', day:'2026-06-09',start:9, end:11,title:'Informe REM mensual',color:'emerald'},
-];
+let TIMEBLOCKS=[];
 // ── Notas (personales) ──
-let NOTES=[
-  {id:'n1',userId:'dir',title:'Pendientes de la semana',body:'Coordinar con SECPLAC el plan de inversión 2026. Revisar ejecución presupuestaria antes del cierre anual.',updated:'2026-06-09'},
-];
+let NOTES=[];
 // ── Reuniones / Eventos de calendario ──
-let MEETINGS=[
-  {id:'mt1',title:'Comité directivo',date:'2026-06-10',time:'10:00',attendees:['dir','ana','luis'],place:'Sala de reuniones',notes:'Revisión de avances mensuales',workspaceId:'ws1'},
-  {id:'mt2',title:'Reunión equipo Salud',date:'2026-06-11',time:'09:30',attendees:['dir','ana'],place:'CESFAM',notes:'',workspaceId:'ws2'},
-];
+let MEETINGS=[];
 let EVENTS=[];
 const myBlocks=()=>TIMEBLOCKS.filter(b=>b.userId===CURRENT.id);
 
@@ -269,8 +227,8 @@ function buildNav(){
     ['timebox','⏱ Time Boxing'],
     admin&&['instrucciones','⚡ Instrucciones'],
     admin&&['users','👥 Usuarios'],
-    admin&&['rendimiento','📈 Rendimiento'],
-    admin&&['reports','📊 Reportes'],
+    ['rendimiento',admin?'📈 Rendimiento':'📈 Mi rendimiento'],
+    ['reports',admin?'📊 Reportes':'📊 Mis reportes'],
     ['meetings','🎯 Reuniones'],
     ['notes','📝 Notas'],
     ['calendar','📅 Calendario'],
@@ -304,7 +262,7 @@ function renderEspacios(){REDRAW=renderEspacios;
       <button onclick="nuevoEspacio()" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm font-medium px-3 py-2">+ Espacio</button></div>
     <p class="text-sm text-slate-500 mb-5">Cada espacio agrupa sus <b>proyectos</b>, sus <b>instrucciones</b> y <b>tareas directas</b> (sin proyecto).</p>
     <div class="grid sm:grid-cols-2 gap-3">
-    ${WORKSPACES.map(w=>{const np=PROJECTS.filter(p=>(p.workspaceId||'ws1')===w.id).length;const nd=TASKS.filter(t=>taskWS(t)===w.id&&!t.projectId).length;const active=w.id===CURRENT_WS;
+    ${WORKSPACES.filter(w=>CURRENT.role==='admin'||w.userIds.includes(CURRENT.id)).map(w=>{const np=PROJECTS.filter(p=>(p.workspaceId||'ws1')===w.id).length;const nd=TASKS.filter(t=>taskWS(t)===w.id&&!t.projectId).length;const active=w.id===CURRENT_WS;
       return `<div class="rounded-xl border ${active?'border-inst ring-1 ring-inst/30':'border-slate-200'} bg-white p-4 shadow-sm">
         <div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="text-lg">🗂</span><span class="font-semibold text-slate-800">${w.name}</span>${w.primary?'<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-semibold">PRIMARIO</span>':''}</div>${active?'<span class="text-[10px] text-inst font-semibold">● activo</span>':''}</div>
         <div class="flex -space-x-1.5 mb-3">${w.userIds.slice(0,6).map(u=>`<span class="w-6 h-6 rounded-full bg-inst/10 text-inst grid place-items-center text-[9px] font-semibold ring-2 ring-white">${initials(memberName(u))}</span>`).join('')}${w.userIds.length>6?`<span class="w-6 h-6 rounded-full bg-slate-100 text-slate-500 grid place-items-center text-[9px] ring-2 ring-white">+${w.userIds.length-6}</span>`:''}</div>
@@ -424,6 +382,7 @@ function renderMeetings(){REDRAW=renderMeetings;const ms=MEETINGS.filter(m=>m.wo
       <div class="text-center shrink-0 w-12"><div class="text-[10px] text-slate-400 uppercase">${MESES[+m.date.slice(5,7)-1]}</div><div class="text-2xl font-bold text-inst leading-none">${+m.date.slice(8,10)}</div></div>
       <div class="flex-1 min-w-0"><div class="font-semibold text-slate-800">${m.title}</div><div class="text-xs text-slate-500">🕒 ${m.time} · 📍 ${m.place||'—'}</div>${m.notes?`<div class="text-xs text-slate-400 mt-0.5 truncate">${m.notes}</div>`:''}</div>
       <div class="flex -space-x-1.5 shrink-0">${m.attendees.map(u=>`<span class="w-6 h-6 rounded-full bg-inst/10 text-inst grid place-items-center text-[9px] font-semibold ring-2 ring-white" title="${memberName(u)}">${initials(memberName(u))}</span>`).join('')}</div>
+      ${(CURRENT.role==='admin'||wsLeaderOf(m.workspaceId)===CURRENT.id||(m.attendees&&m.attendees[0]===CURRENT.id))?`<button onclick="delMeeting('${m.id}')" class="shrink-0 w-8 h-8 grid place-items-center rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50" title="Eliminar reunión">🗑</button>`:''}
     </div>`).join('')||'<div class="text-sm text-slate-400">Sin reuniones agendadas.</div>'}</div></div>`;
 }
 function nuevaReunion(){openModal('Nueva reunión',[
@@ -432,6 +391,12 @@ function nuevaReunion(){openModal('Nueva reunión',[
     {name:'place',label:'Lugar',full:true,ph:'Sala de reuniones, CESFAM…'},
     {name:'notes',label:'Temario / notas',type:'textarea',full:true},
   ],d=>{MEETINGS.push({id:'mt'+Date.now(),title:d.title,date:d.date||HOY,time:d.time||'10:00',attendees:[CURRENT.id],place:d.place,notes:d.notes,workspaceId:CURRENT_WS});renderMeetings();},'Agendar reunión');}
+function delMeeting(id){const m=MEETINGS.find(x=>x.id===id);if(!m)return;
+  if(!(CURRENT.role==='admin'||wsLeaderOf(m.workspaceId)===CURRENT.id||(m.attendees&&m.attendees[0]===CURRENT.id)))return;
+  confirmModal('Eliminar reunión','¿Seguro que deseas eliminar la reunión «'+m.title+'»? También dejará de aparecer en el Calendario.',()=>{
+    MEETINGS.splice(MEETINGS.findIndex(x=>x.id===id),1);
+    logAct('eliminó la reunión',m.title); renderMeetings();
+  },'Eliminar reunión');}
 function nuevoEvento(){openModal('Nuevo evento',[{name:'title',label:'Título',required:true,full:true,ph:'Ej: Feriado, hito, actividad…'},{name:'date',label:'Fecha',type:'date',value:HOY}],d=>{EVENTS.push({id:'ev'+Date.now(),title:d.title,date:d.date||HOY,workspaceId:CURRENT_WS});renderCalendarScreen();},'Agregar');}
 
 // ═══ RENDIMIENTO DE EQUIPO (vista líder) ═══
@@ -460,29 +425,103 @@ function rankCard(title,key,c,rows){const sorted=rows.slice().sort((a,b)=>b.s[ke
   <div class="text-xs font-semibold text-slate-700 mb-2">${title}</div>
   ${sorted.map((r,i)=>`<div class="flex items-center gap-2 py-1 text-sm"><span class="w-4 text-center ${i===0?'text-amber-500 font-bold':'text-slate-400'}">${i===0?'🥇':i+1}</span><span class="flex-1 text-slate-600 truncate">${r.m.name.split(' ')[0]}</span><span class="font-bold text-${c}-600 tabular-nums">${r.s[key]}</span></div>`).join('')}
 </div>`;}
+let RVIEW='cards';
 function renderTeamDash(){REDRAW=renderTeamDash;
+  if(CURRENT.role!=='admin')return renderMyPerf();
   const funcs=MEMBERS.filter(m=>m.role!=='Directivo');
   const rows=funcs.map(m=>({m,s:statOf(m.id)}));
   main.innerHTML=`<div class="p-6 max-w-6xl mx-auto">
     <h1 class="text-xl font-bold text-slate-900 mb-1">Rendimiento del equipo</h1>
-    <p class="text-sm text-slate-500 mb-5">${funcs.length} funcionarios · ${wsName(CURRENT_WS)} · carga y semáforo por persona</p>
-    <div class="grid md:grid-cols-2 gap-3 mb-6">${rows.map(r=>cardFunc(r.m,r.s)).join('')}</div>
-    <h2 class="text-sm font-bold text-slate-700 mb-2">🏅 Ranking de funcionarios</h2>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      ${rankCard('🏆 Más completadas','comp','emerald',rows)}
-      ${rankCard('⚠ Más vencidas','venc','rose',rows)}
-      ${rankCard('🕒 Más pendientes','pend','amber',rows)}
-      ${rankCard('⚡ Más en progreso','prog','blue',rows)}
-    </div></div>`;
+    <p class="text-sm text-slate-500 mb-4">${funcs.length} funcionarios · ${wsName(CURRENT_WS)} · carga y semáforo por persona</p>
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex gap-1"><button class="wtab rtab" data-rv="cards">▦ Tarjetas</button>
+      <button class="wtab rtab" data-rv="charts">📊 Gráficos</button></div>
+      <button onclick="exportResumen()" class="text-xs rounded-lg bg-inst text-white px-3 py-1.5 hover:bg-inst-dark font-medium">🖨 Imprimir resumen ejecutivo (PDF)</button></div>
+    <div id="rview"></div></div>`;
+  document.querySelectorAll('.rtab').forEach(b=>{ if(b.dataset.rv===RVIEW)b.classList.add('wtab-active'); b.addEventListener('click',()=>{RVIEW=b.dataset.rv;renderTeamDash();}); });
+  document.getElementById('rview').innerHTML = RVIEW==='charts'?teamCharts(rows):teamCards(rows);
 }
+function renderMyPerf(){REDRAW=renderMyPerf;
+  const s=statOf(CURRENT.id);
+  const di=[{l:'Pendientes',v:s.pend,col:'#f59e0b'},{l:'En progreso',v:s.prog,col:'#3b82f6'},{l:'Completadas',v:s.comp,col:'#10b981'},{l:'Vencidas',v:s.venc,col:'#f43f5e'}];
+  const big=(l,v,c)=>`<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div class="text-xs text-slate-500">${l}</div><div class="text-2xl font-bold text-${c}-600 tabular-nums mt-1">${v}</div></div>`;
+  main.innerHTML=`<div class="p-6 max-w-4xl mx-auto">
+    <h1 class="text-xl font-bold text-slate-900 mb-1">Mi rendimiento</h1>
+    <p class="text-sm text-slate-500 mb-5">${wsName(CURRENT_WS)} · resumen de tus tareas e instrucciones</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+      ${big('Pendientes',s.pend,'amber')}${big('En progreso',s.prog,'blue')}${big('Completadas',s.comp,'emerald')}${big('Vencidas',s.venc,'rose')}
+    </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-700 mb-3">🚦 Urgencia</h3>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="rounded-lg bg-rose-50 py-3"><div class="text-2xl font-bold text-rose-600 tabular-nums">${s.venc}</div><div class="text-[11px] text-slate-500">Vencidas</div></div>
+          <div class="rounded-lg bg-amber-50 py-3"><div class="text-2xl font-bold text-amber-600 tabular-nums">${s.hoy}</div><div class="text-[11px] text-slate-500">Vencen hoy</div></div>
+          <div class="rounded-lg bg-blue-50 py-3"><div class="text-2xl font-bold text-blue-600 tabular-nums">${s.prox}</div><div class="text-[11px] text-slate-500">Próx. 3 días</div></div>
+        </div>
+        <div class="text-xs text-slate-500 mt-3 border-t border-slate-100 pt-2">📁 ${s.proyectos} proyectos · ✅ ${s.tareas} tareas asignadas</div>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h3 class="text-sm font-bold text-slate-700 mb-3">📊 Mis tareas por estado</h3>
+        <div class="flex items-center gap-5">${donutSVG(di.map(i=>({v:i.v,col:i.col})))}
+          <div class="flex-1">${di.map(i=>`<div class="flex items-center gap-2 text-sm py-0.5"><span class="w-3 h-3 rounded-sm" style="background:${i.col}"></span><span class="flex-1 text-slate-600">${i.l}</span><span class="font-bold tabular-nums text-slate-700">${i.v}</span></div>`).join('')}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function teamCards(rows){return `<div class="grid md:grid-cols-2 gap-3 mb-6">${rows.map(r=>cardFunc(r.m,r.s)).join('')}</div>
+  <h2 class="text-sm font-bold text-slate-700 mb-2">🏅 Ranking de funcionarios</h2>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    ${rankCard('🏆 Más completadas','comp','emerald',rows)}
+    ${rankCard('⚠ Más vencidas','venc','rose',rows)}
+    ${rankCard('🕒 Más pendientes','pend','amber',rows)}
+    ${rankCard('⚡ Más en progreso','prog','blue',rows)}
+  </div>`;}
+function donutSVG(segs){const total=segs.reduce((a,b)=>a+b.v,0);const r=42,C=2*Math.PI*r;let off=0;
+  const arcs=total?segs.filter(s=>s.v>0).map(s=>{const len=s.v/total*C;const el=`<circle cx="60" cy="60" r="${r}" fill="none" stroke="${s.col}" stroke-width="15" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 60 60)"/>`;off+=len;return el;}).join(''):`<circle cx="60" cy="60" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="15"/>`;
+  return `<svg viewBox="0 0 120 120" class="w-28 h-28 shrink-0">${arcs}<text x="60" y="57" text-anchor="middle" fill="#1e293b" font-size="20" font-weight="700">${total}</text><text x="60" y="73" text-anchor="middle" fill="#94a3b8" font-size="9">tareas</text></svg>`;}
+function teamCharts(rows){
+  const T={pend:0,prog:0,comp:0,venc:0}; rows.forEach(r=>{T.pend+=r.s.pend;T.prog+=r.s.prog;T.comp+=r.s.comp;T.venc+=r.s.venc;});
+  const flagCol={rose:'#f43f5e',amber:'#f59e0b',emerald:'#10b981'};
+  const seg=(v,tot,col)=>v?`<div class="h-full" style="width:${(v/tot*100).toFixed(1)}%;background:${col}" title="${v}"></div>`:'';
+  const di=[{l:'Pendientes',v:T.pend,col:'#f59e0b'},{l:'En progreso',v:T.prog,col:'#3b82f6'},{l:'Completadas',v:T.comp,col:'#10b981'},{l:'Vencidas',v:T.venc,col:'#f43f5e'}];
+  return `<div class="grid md:grid-cols-2 gap-4">
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h3 class="text-sm font-bold text-slate-700 mb-3">⚖ Carga por funcionario <span class="font-normal text-slate-400">(jornada ${JORNADA_H}h)</span></h3>
+      ${rows.map(r=>{const l=r.s.load;return `<div class="flex items-center gap-2 mb-2.5">
+        <span class="w-16 text-xs text-slate-600 truncate">${r.m.name.split(' ')[0]}</span>
+        <div class="flex-1 h-4 bg-slate-100 rounded overflow-hidden"><div class="h-full rounded" style="width:${Math.min(l.pct,100)}%;background:${flagCol[l.flag]}"></div></div>
+        <span class="w-20 text-right text-[11px] tabular-nums text-slate-500">${l.h}h · ${l.pct}%</span></div>`;}).join('')||'<div class="text-sm text-slate-400">Sin funcionarios.</div>'}
+      <div class="text-[11px] text-slate-400 mt-1 flex gap-3"><span>🟢 &lt;80%</span><span>🟡 80–100%</span><span>🔴 &gt;100%</span></div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <h3 class="text-sm font-bold text-slate-700 mb-3">📊 Distribución de tareas del equipo</h3>
+      <div class="flex items-center gap-5">${donutSVG(di.map(i=>({v:i.v,col:i.col})))}
+        <div class="flex-1">${di.map(i=>`<div class="flex items-center gap-2 text-sm py-0.5"><span class="w-3 h-3 rounded-sm" style="background:${i.col}"></span><span class="flex-1 text-slate-600">${i.l}</span><span class="font-bold tabular-nums text-slate-700">${i.v}</span></div>`).join('')}</div>
+      </div>
+    </div>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:col-span-2">
+      <h3 class="text-sm font-bold text-slate-700 mb-3">📦 Tareas por funcionario (por estado)</h3>
+      ${rows.map(r=>{const s=r.s;const tot=s.pend+s.prog+s.comp+s.venc||1;return `<div class="mb-2.5">
+        <div class="flex justify-between text-xs text-slate-500 mb-0.5"><span class="text-slate-600">${r.m.name.split(' ')[0]}</span><span class="tabular-nums">${s.tareas} tareas</span></div>
+        <div class="flex h-4 rounded overflow-hidden bg-slate-100">${seg(s.pend,tot,'#f59e0b')}${seg(s.prog,tot,'#3b82f6')}${seg(s.comp,tot,'#10b981')}${seg(s.venc,tot,'#f43f5e')}</div></div>`;}).join('')}
+      <div class="flex flex-wrap gap-3 text-[11px] text-slate-500 mt-2 border-t border-slate-100 pt-2">
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm" style="background:#f59e0b"></span>Pendientes</span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm" style="background:#3b82f6"></span>En progreso</span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm" style="background:#10b981"></span>Completadas</span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm" style="background:#f43f5e"></span>Vencidas</span>
+      </div>
+    </div>
+  </div>`;}
 // ═══ REGISTRO DE ACTIVIDADES ═══
-function renderActivity(){REDRAW=renderActivity;
+function renderActivity(){REDRAW=renderActivity; purgeActivity();
   main.innerHTML=`<div class="p-6 max-w-3xl mx-auto"><h1 class="text-xl font-bold text-slate-900 mb-1">Registro de actividades</h1>
-    <p class="text-sm text-slate-500 mb-5">Historial reciente del equipo.</p>
-    <div class="rounded-xl border border-slate-200 bg-white shadow-sm">${ACTIVITY.map(a=>`<div class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-0 text-sm">
+    <p class="text-sm text-slate-500 mb-5">Historial reciente del equipo · los registros se conservan 7 días.</p>
+    <div class="rounded-xl border border-slate-200 bg-white shadow-sm">${ACTIVITY.length?ACTIVITY.map(a=>`<div class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-0 text-sm">
       <span class="w-8 h-8 rounded-full bg-inst/10 text-inst grid place-items-center text-[10px] font-semibold shrink-0">${initials(memberName(a.who))}</span>
       <div class="flex-1"><span class="font-medium text-slate-700">${memberName(a.who)}</span> <span class="text-slate-500">${a.action}</span> ${a.obj?`<span class="text-slate-700">«${a.obj}»</span>`:''}</div>
-      <span class="text-xs text-slate-400 shrink-0">${a.ts}</span></div>`).join('')}</div></div>`;
+      <span class="text-xs text-slate-400 shrink-0">${relTime(a)}</span></div>`).join(''):'<div class="p-6 text-center text-sm text-slate-400">Sin actividad registrada.</div>'}</div></div>`;
 }
 
 function stub(name,icon){REDRAW=()=>stub(name,icon);
@@ -567,27 +606,39 @@ function taskRow(t){const c=estadoColor[efEstado(t)],pc=prioColor[t.prioridad];
 // ═══════════════ TAREAS (global, con vistas) ═══════════════
 function renderTasks(){
   REDRAW=renderTasks; SCREEN_PROJECT=null;
-  const all=visibleTasks().filter(t=>(!FILTER.estado||efEstado(t)===FILTER.estado)&&(!FILTER.prioridad||t.prioridad===FILTER.prioridad));
+  const all=visibleTasks().filter(t=>(!FILTER.estado||efEstado(t)===FILTER.estado)&&(!FILTER.prioridad||t.prioridad===FILTER.prioridad)&&(!FILTER.who||t.who===FILTER.who));
   const directas=all.filter(t=>!t.projectId).length;
   main.innerHTML=workspaceHeader('Tareas',`${all.length} tareas · ${directas} directas · ${wsName(CURRENT_WS)}`,false)+`<div id="wview"></div>`;
   wireWorkspace(()=>all);
 }
 
 // ═══════════════ PROYECTOS ═══════════════
+let PROJ_F={estado:'',prioridad:'',who:'',limit:10};
 function renderProjects(){
   REDRAW=renderProjects; SCREEN_PROJECT=null;
   PROJECTS.forEach(p=>syncProjectStatus(p.id));
-  const projs=visibleProjects();
+  const all=visibleProjects();
+  const whoOpts=[...new Set(all.map(p=>p.ownerId))];
+  const filtered=all.filter(p=>(!PROJ_F.estado||p.estado===PROJ_F.estado)&&(!PROJ_F.prioridad||p.prioridad===PROJ_F.prioridad)&&(!PROJ_F.who||p.ownerId===PROJ_F.who));
+  const shown=filtered.slice(0,PROJ_F.limit);
+  const selCls="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-700 outline-none focus:border-inst";
   main.innerHTML=`<div class="bg-white border-b border-slate-200 px-5 pt-4">
     <div class="flex items-center justify-between">
-      <div><h1 class="text-xl font-bold text-slate-900">Proyectos</h1><p class="text-xs text-slate-500 mt-0.5">${projs.length} proyectos · ${wsName(CURRENT_WS)}</p></div>
+      <div><h1 class="text-xl font-bold text-slate-900">Proyectos</h1><p class="text-xs text-slate-500 mt-0.5">Mostrando ${shown.length} de ${filtered.length}${filtered.length!==all.length?' (filtrados de '+all.length+')':''} · ${wsName(CURRENT_WS)}</p></div>
       <button onclick="nuevoProyecto()" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm font-medium px-3 py-2">+ Proyecto</button></div>
     <div class="flex gap-1 mt-3">
       <button class="wtab ptab" data-pv="table">▦ Tabla</button>
       <button class="wtab ptab" data-pv="grid">▤ Tarjetas</button></div>
+    <div class="flex flex-wrap items-center gap-2 mt-2 pb-3">
+      <select onchange="PROJ_F.estado=this.value;renderProjects()" class="${selCls}"><option value="">Todos los estados</option>${ESTADOS.map(s=>`<option value="${s}" ${PROJ_F.estado===s?'selected':''}>${s}</option>`).join('')}</select>
+      <select onchange="PROJ_F.prioridad=this.value;renderProjects()" class="${selCls}"><option value="">Toda prioridad</option>${['Alta','Media','Baja'].map(s=>`<option value="${s}" ${PROJ_F.prioridad===s?'selected':''}>${s}</option>`).join('')}</select>
+      <select onchange="PROJ_F.who=this.value;renderProjects()" class="${selCls}"><option value="">Todos los responsables</option>${whoOpts.map(w=>`<option value="${w}" ${PROJ_F.who===w?'selected':''}>${memberName(w)}</option>`).join('')}</select>
+      ${(PROJ_F.estado||PROJ_F.prioridad||PROJ_F.who)?`<button onclick="PROJ_F.estado='';PROJ_F.prioridad='';PROJ_F.who='';renderProjects()" class="text-xs text-slate-400 hover:text-rose-500 px-1">✕ limpiar</button>`:''}
+      <div class="flex items-center gap-1 ml-auto text-xs"><span class="text-slate-400 mr-1">Visibles:</span>${[10,25,50].map(n=>`<button onclick="PROJ_F.limit=${n};renderProjects()" class="px-2.5 py-1 rounded-lg font-medium ${PROJ_F.limit===n?'bg-inst text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${n}</button>`).join('')}</div>
+    </div>
   </div><div id="pview"></div>`;
   document.querySelectorAll('.ptab').forEach(b=>{ if(b.dataset.pv===PVIEW)b.classList.add('wtab-active'); b.addEventListener('click',()=>{PVIEW=b.dataset.pv;renderProjects();}); });
-  (PVIEW==='grid'?projectsGrid:projectsTable)(projs);
+  (PVIEW==='grid'?projectsGrid:projectsTable)(shown);
 }
 function projectsGrid(projs){
   document.getElementById('pview').innerHTML=`<div class="p-5"><div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -604,6 +655,7 @@ function projectsGrid(projs){
 }
 function projectsTable(projs){
   const groups=ESTADOS.map(e=>({e,items:projs.filter(p=>p.estado===e)})).filter(g=>g.items.length);
+  if(!groups.length){document.getElementById('pview').innerHTML='<div class="p-5"><div class="rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-400 shadow-sm">Ningún proyecto coincide con los filtros.</div></div>';return;}
   document.getElementById('pview').innerHTML=`<div class="p-5 space-y-5">${groups.map(g=>{const ec=estadoColor[g.e];const tot=g.items.reduce((s,p)=>s+(p.presupuesto||0),0);
     return `<div>
       <div class="flex items-center gap-2 mb-1.5 px-1"><span class="text-sm font-semibold text-${ec}-600">▾ ${g.e}</span><span class="text-xs text-slate-400">${g.items.length}</span></div>
@@ -678,15 +730,18 @@ function workspaceHeader(title,sub,proj){
           <option value="">Estado: todos</option>${ESTADOS.concat('Vencida').map(e=>`<option ${FILTER.estado===e?'selected':''}>${e}</option>`).join('')}</select>
         <select id="fPrio" class="text-xs rounded-lg border border-slate-200 px-2 py-1 text-slate-600 outline-none">
           <option value="">Prioridad: todas</option>${['Alta','Media','Baja'].map(e=>`<option ${FILTER.prioridad===e?'selected':''}>${e}</option>`).join('')}</select>
+        <select id="fResp" class="text-xs rounded-lg border border-slate-200 px-2 py-1 text-slate-600 outline-none">
+          <option value="">Responsable: todos</option>${[...new Set(visibleTasks().map(t=>t.who))].map(w=>`<option value="${w}" ${FILTER.who===w?'selected':''}>${memberName(w)}</option>`).join('')}</select>
       </div>
     </div></div>`;
 }
 function wireWorkspace(getList){
   document.querySelectorAll('.wtab').forEach(b=>{ if(b.dataset.wview===WVIEW)b.classList.add('wtab-active');
     b.addEventListener('click',()=>{WVIEW=b.dataset.wview; rerenderView(getList);});});
-  const fe=document.getElementById('fEstado'),fp=document.getElementById('fPrio');
+  const fe=document.getElementById('fEstado'),fp=document.getElementById('fPrio'),fr=document.getElementById('fResp');
   if(fe)fe.onchange=()=>{FILTER.estado=fe.value;REDRAW();};
   if(fp)fp.onchange=()=>{FILTER.prioridad=fp.value;REDRAW();};
+  if(fr)fr.onchange=()=>{FILTER.who=fr.value;REDRAW();};
   WS_GET=getList; rerenderView(getList);
 }
 let WS_GET=()=>[];
@@ -837,65 +892,183 @@ function calMonth(){const dow=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];cons
 }
 
 // ═══════════════ INSTRUCCIONES (directivo → equipo) ═══════════════
+let INSTR_F={estado:'',who:'',limit:10};
 function renderInstrucciones(){REDRAW=renderInstrucciones;
   const inst=instructionsAll();
+  const whoOpts=[...new Set(inst.map(t=>t.who))];
+  const filtered=inst.filter(t=>(!INSTR_F.estado||efEstado(t)===INSTR_F.estado)&&(!INSTR_F.who||t.who===INSTR_F.who));
+  const shown=filtered.slice(0,INSTR_F.limit);
+  const selCls="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-inst";
   main.innerHTML=`<div class="p-6 max-w-4xl mx-auto">
     <div class="flex items-center justify-between mb-1"><h1 class="text-xl font-bold text-slate-900">Instrucciones enviadas</h1>
       <button onclick="nuevaInstruccion()" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm font-medium px-3 py-2">+ Nueva instrucción</button></div>
-    <p class="text-sm text-slate-500 mb-5">Tareas directas que asignas a funcionarios, aparte de sus propios proyectos.</p>
+    <p class="text-sm text-slate-500 mb-4">Tareas directas que asignas a funcionarios, aparte de sus propios proyectos.</p>
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <select onchange="INSTR_F.estado=this.value;renderInstrucciones()" class="${selCls}">
+        <option value="">Todos los estados</option>
+        ${['Pendiente','En Progreso','En Revisión','Completada','Vencida'].map(s=>`<option value="${s}" ${INSTR_F.estado===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+      <select onchange="INSTR_F.who=this.value;renderInstrucciones()" class="${selCls}">
+        <option value="">Todos los responsables</option>
+        ${whoOpts.map(w=>`<option value="${w}" ${INSTR_F.who===w?'selected':''}>${memberName(w)}</option>`).join('')}
+      </select>
+      ${(INSTR_F.estado||INSTR_F.who)?`<button onclick="INSTR_F.estado='';INSTR_F.who='';renderInstrucciones()" class="text-xs text-slate-400 hover:text-rose-500 px-1">✕ limpiar</button>`:''}
+      <div class="flex items-center gap-1 ml-auto text-xs"><span class="text-slate-400 mr-1">Visibles:</span>
+        ${[10,25,50].map(n=>`<button onclick="INSTR_F.limit=${n};renderInstrucciones()" class="px-2.5 py-1 rounded-lg font-medium ${INSTR_F.limit===n?'bg-inst text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${n}</button>`).join('')}
+      </div>
+    </div>
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
-      ${inst.length?inst.map(t=>{const c=estadoColor[efEstado(t)];return `<div onclick="openTask('${t.key}')" class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer text-sm">
+      ${shown.length?shown.map(t=>{const c=estadoColor[efEstado(t)];return `<div onclick="openTask('${t.key}')" class="flex items-center gap-3 px-4 py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer text-sm">
         <span class="text-inst">📌</span><span class="flex-1 text-slate-700">${t.title}</span>
         <span class="w-7 h-7 rounded-full bg-inst/10 text-inst grid place-items-center text-[10px] font-semibold">${memberName(t.who).slice(0,2)}</span>
         <span class="px-2 py-0.5 rounded-full bg-${c}-100 text-${c}-700 text-[11px] font-medium">${efEstado(t)}</span>
-        <span class="text-xs text-slate-400 w-12 text-right">${fdate(t.vence)}</span></div>`;}).join(''):'<div class="p-6 text-center text-sm text-slate-400">Sin instrucciones enviadas.</div>'}
-    </div></div>`;
+        <span class="text-xs text-slate-400 w-12 text-right">${fdate(t.vence)}</span></div>`;}).join(''):`<div class="p-6 text-center text-sm text-slate-400">${inst.length?'Ninguna instrucción coincide con los filtros.':'Sin instrucciones enviadas.'}</div>`}
+    </div>
+    ${filtered.length?`<div class="text-xs text-slate-400 mt-2 text-right">Mostrando ${shown.length} de ${filtered.length}${filtered.length!==inst.length?' (de '+inst.length+' en total)':''}.</div>`:''}
+  </div>`;
 }
 
 // ═══════════════ USUARIOS (equipo) ═══════════════
+let USR_F={role:'',area:'',limit:15};
 function renderUsers(){REDRAW=renderUsers;
+  const areaOpts=[...new Set(MEMBERS.map(m=>m.area))].sort();
+  const filtered=MEMBERS.filter(m=>(!USR_F.role||m.role===USR_F.role)&&(!USR_F.area||m.area===USR_F.area));
+  const shown=filtered.slice(0,USR_F.limit);
+  const selCls="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-inst";
   main.innerHTML=`<div class="p-6 max-w-4xl mx-auto">
     <div class="flex items-center justify-between mb-1"><h1 class="text-xl font-bold text-slate-900">Usuarios</h1>
       <button onclick="nuevoUsuario()" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm font-medium px-3 py-2">+ Usuario</button></div>
-    <p class="text-sm text-slate-500 mb-5">Equipo municipal. Cada funcionario gestiona sus proyectos; el directivo puede asignarle instrucciones.</p>
+    <p class="text-sm text-slate-500 mb-4">Equipo municipal. Cada funcionario gestiona sus proyectos; el directivo puede asignarle instrucciones.</p>
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <select onchange="USR_F.role=this.value;renderUsers()" class="${selCls}">
+        <option value="">Todos los roles</option>
+        ${['Directivo','Funcionario'].map(r=>`<option value="${r}" ${USR_F.role===r?'selected':''}>${r}</option>`).join('')}
+      </select>
+      <select onchange="USR_F.area=this.value;renderUsers()" class="${selCls}">
+        <option value="">Todas las áreas</option>
+        ${areaOpts.map(a=>`<option value="${a}" ${USR_F.area===a?'selected':''}>${a}</option>`).join('')}
+      </select>
+      ${(USR_F.role||USR_F.area)?`<button onclick="USR_F.role='';USR_F.area='';renderUsers()" class="text-xs text-slate-400 hover:text-rose-500 px-1">✕ limpiar</button>`:''}
+      <div class="flex items-center gap-1 ml-auto text-xs"><span class="text-slate-400 mr-1">Visibles:</span>
+        ${[15,25,50].map(n=>`<button onclick="USR_F.limit=${n};renderUsers()" class="px-2.5 py-1 rounded-lg font-medium ${USR_F.limit===n?'bg-inst text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${n}</button>`).join('')}
+      </div>
+    </div>
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
       <table class="w-full text-sm"><thead><tr class="text-xs text-slate-500 bg-slate-50 border-b border-slate-200">
         <th class="text-left font-semibold p-3">Funcionario</th><th class="text-left font-semibold p-3">Cargo</th><th class="text-left font-semibold p-3">Área</th>
         <th class="font-semibold p-3">Proyectos</th><th class="font-semibold p-3">Instrucciones</th><th class="text-center font-semibold p-3">Rol</th><th class="font-semibold p-3 pr-4"></th></tr></thead>
-      <tbody>${MEMBERS.map(m=>`<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+      <tbody>${shown.length?shown.map(m=>`<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50">
         <td class="p-3 font-medium text-slate-700 flex items-center gap-2"><span class="w-7 h-7 rounded-full bg-inst/10 text-inst grid place-items-center text-[10px] font-semibold">${initials(m.name)}</span>${m.name}</td>
         <td class="p-3 text-slate-600">${m.cargo||'—'}</td>
         <td class="p-3 text-slate-500">${m.area}</td>
         <td class="p-3 text-center text-slate-600">${projectsOf(m.id).length}</td>
         <td class="p-3 text-center text-slate-600">${instructionsOf(m.id).length}</td>
         <td class="p-3 text-center"><span class="text-[11px] px-2 py-0.5 rounded-full ${m.role==='Directivo'?'bg-inst/10 text-inst':'bg-slate-100 text-slate-500'}">${m.role}</span></td>
-        <td class="p-3 pr-4 text-right">${(CURRENT.role==='admin'&&m.id!==CURRENT.id)?`<button onclick="delUser('${m.id}')" class="text-slate-300 hover:text-rose-500" title="Eliminar usuario">🗑</button>`:''}</td>
-      </tr>`).join('')}</tbody></table></div></div>`;
+        <td class="p-3 pr-4 text-right">${(CURRENT.role==='admin'&&m.id!==CURRENT.id)?`<button onclick="delUser('${m.id}')" class="inline-flex items-center gap-1 rounded-lg border border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100 px-2.5 py-1.5 text-xs font-semibold" title="Eliminar usuario">🗑 Eliminar</button>`:''}</td>
+      </tr>`).join(''):`<tr><td colspan="7" class="p-6 text-center text-sm text-slate-400">Ningún usuario coincide con los filtros.</td></tr>`}</tbody></table></div>
+    ${filtered.length?`<div class="text-xs text-slate-400 mt-2 text-right">Mostrando ${shown.length} de ${filtered.length}${filtered.length!==MEMBERS.length?' (de '+MEMBERS.length+' en total)':''}.</div>`:''}
+  </div>`;
 }
 
 // ═══════════════ REPORTES ═══════════════
+function exportResumen(){
+  const admin=CURRENT.role==='admin';
+  const ws=wsName(CURRENT_WS);
+  const fecha=HOY.split('-').reverse().join('/');
+  const funcs=admin?MEMBERS.filter(m=>m.role!=='Directivo'):MEMBERS.filter(m=>m.id===CURRENT.id);
+  const projs=visibleProjects();
+  const myTasks=admin?TASKS.filter(t=>taskWS(t)===CURRENT_WS):TASKS.filter(t=>t.who===CURRENT.id);
+  const kpis=[
+    [admin?'Funcionarios':'Tareas asignadas', admin?funcs.length:myTasks.length],
+    ['Proyectos', projs.length],
+    ['Tareas', myTasks.length],
+    ['Vencidas', myTasks.filter(isVencida).length],
+  ];
+  const tBud=projs.reduce((s,p)=>s+(p.presupuesto||0),0), tEj=projs.reduce((s,p)=>s+projectGasto(p.id),0);
+  const ejePct=tBud?Math.round(tEj/tBud*100):0;
+  const rowsFunc=funcs.map(m=>{const s=statOf(m.id),l=s.load;return `<tr>
+    <td class="l"><b>${m.name}</b><div class="sub">${m.cargo||''}</div></td><td>${m.area}</td>
+    <td class="c">${s.proyectos}</td><td class="c">${s.tareas}</td><td class="c">${s.pend}</td><td class="c">${s.prog}</td>
+    <td class="c ok">${s.comp}</td><td class="c ${s.venc?'bad':''}">${s.venc}</td>${admin?`<td class="c"><b class="${l.flag==='rose'?'bad':l.flag==='amber'?'warn':'ok'}">${l.pct}%</b></td>`:''}</tr>`;}).join('')||`<tr><td colspan="${admin?9:8}" class="c sub">Sin funcionarios.</td></tr>`;
+  const rowsProj=projs.map(p=>{const ts=tasksOfProject(p.id);const dn=ts.filter(t=>t.estado==='Completada').length;const prog=ts.length?Math.round(dn/ts.length*100):0;const ej=projectGasto(p.id);const ep=p.presupuesto?Math.round(ej/p.presupuesto*100):0;return `<tr>
+    <td class="l"><b>${p.title}</b></td><td>${memberName(p.ownerId)}</td><td>${p.estado}</td><td>${p.prioridad}</td>
+    <td class="c">${fdate(p.inicio)}–${fdate(p.fin)}</td><td class="r">${money(p.presupuesto)}</td>
+    <td class="r">${money(ej)} <span class="sub">(${ep}%)</span></td><td class="c">${prog}%</td></tr>`;}).join('')||`<tr><td colspan="8" class="c sub">Sin proyectos.</td></tr>`;
+  const logo=location.origin+'/logo-municipalidad.png';
+  const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Resumen Ejecutivo · ${ws}</title>
+  <style>
+    *{box-sizing:border-box} body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1e293b;margin:0;padding:28px 32px;font-size:12px}
+    .top{border-bottom:3px solid #f4b400;padding-bottom:12px;margin-bottom:6px;display:flex;align-items:center;gap:14px}
+    .top img{height:54px} .top .muni{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#ea580c;font-weight:700}
+    .top h1{font-size:19px;margin:2px 0 0;color:#16306e} .top .sub{font-size:11px;color:#64748b}
+    .meta{display:flex;justify-content:space-between;color:#64748b;font-size:11px;margin:8px 0 18px}
+    h2{font-size:13px;color:#16306e;border-left:4px solid #1e3a8a;padding-left:8px;margin:22px 0 8px}
+    .kpis{display:flex;gap:10px;margin-bottom:6px} .kpi{flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px}
+    .kpi .v{font-size:22px;font-weight:800;color:#16306e} .kpi .l{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.04em}
+    .bud{border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;margin:6px 0 4px;font-size:12px}
+    .bar{height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin-top:6px} .bar>div{height:100%;background:${ejePct>=90?'#10b981':ejePct>=50?'#f59e0b':'#f43f5e'}}
+    table{width:100%;border-collapse:collapse;margin-top:4px} th,td{padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:left;font-size:11px}
+    th{background:#f8fafc;color:#475569;font-size:9px;text-transform:uppercase;letter-spacing:.04em}
+    td.c,th.c{text-align:center} td.r,th.r{text-align:right} td.l{text-align:left}
+    .sub{color:#94a3b8;font-size:9px;font-weight:400} .ok{color:#059669} .bad{color:#e11d48;font-weight:700} .warn{color:#d97706}
+    footer{margin-top:24px;border-top:1px solid #e2e8f0;padding-top:8px;color:#94a3b8;font-size:9px;text-align:center}
+    @media print{body{padding:0 6px} @page{margin:14mm}}
+  </style></head><body>
+    <div class="top"><img src="${logo}" onerror="this.style.display='none'"/>
+      <div><div class="muni">Portal Institucional · Ilustre Municipalidad de Pozo Almonte</div>
+      <h1>Resumen Ejecutivo${admin?'':' · Personal'}</h1><div class="sub">DAS Control de Gestión Sanitaria · Espacio: ${ws}</div></div></div>
+    <div class="meta"><span>Generado por: <b>${CURRENT.name}</b> (${roleLabel(CURRENT.role)})</span><span>Fecha: <b>${fecha}</b></span></div>
+    <h2>Indicadores generales</h2>
+    <div class="kpis">${kpis.map(k=>`<div class="kpi"><div class="v">${k[1]}</div><div class="l">${k[0]}</div></div>`).join('')}</div>
+    <div class="bud"><b>Ejecución presupuestaria:</b> ${money(tEj)} de ${money(tBud)} · <b>${ejePct}%</b> · Por ejecutar: ${money(tBud-tEj)}<div class="bar"><div style="width:${Math.min(ejePct,100)}%"></div></div></div>
+    <h2>${admin?'Rendimiento por funcionario':'Mi rendimiento'}</h2>
+    <table><thead><tr><th>Funcionario</th><th>Área</th><th class="c">Proy.</th><th class="c">Tareas</th><th class="c">Pend.</th><th class="c">En prog.</th><th class="c">Compl.</th><th class="c">Venc.</th>${admin?'<th class="c">Carga</th>':''}</tr></thead><tbody>${rowsFunc}</tbody></table>
+    <h2>Estado de proyectos</h2>
+    <table><thead><tr><th>Proyecto</th><th>Responsable</th><th>Estado</th><th>Prioridad</th><th class="c">Cronograma</th><th class="r">Presupuesto</th><th class="r">Ejecutado</th><th class="c">Avance</th></tr></thead><tbody>${rowsProj}</tbody></table>
+    <footer>Documento generado automáticamente por DAS Control de Gestión Sanitaria — Municipalidad de Pozo Almonte. Uso interno.</footer>
+    <scr`+`ipt>window.onload=function(){setTimeout(function(){window.print();},250);};<\/scr`+`ipt>
+  </body></html>`;
+  const w=window.open('','_blank');
+  if(!w){confirmModal('Ventana bloqueada','Tu navegador bloqueó la ventana emergente. Habilita las ventanas emergentes para generar el PDF.',()=>{},'Entendido');return;}
+  w.document.write(html); w.document.close();
+}
+let REP_F={who:'',estado:'',prioridad:'',limit:10};
 function renderReports(){REDRAW=renderReports;
-  const venc=TASKS.filter(isVencida).length;
+  const admin=CURRENT.role==='admin';
+  const src=admin?PROJECTS:visibleProjects();
+  const myTasks=admin?TASKS:TASKS.filter(t=>t.who===CURRENT.id);
+  const venc=myTasks.filter(isVencida).length;
   const kpi=(l,v,i)=>`<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div class="flex items-center justify-between"><span class="text-xs text-slate-500">${l}</span><span class="text-slate-300">${i}</span></div><div class="text-2xl font-bold text-slate-900 mt-1 tabular-nums">${v}</div></div>`;
+  const whoOpts=[...new Set(src.map(p=>p.ownerId))];
+  const filtered=src.filter(p=>(!REP_F.who||p.ownerId===REP_F.who)&&(!REP_F.estado||p.estado===REP_F.estado)&&(!REP_F.prioridad||p.prioridad===REP_F.prioridad));
+  const shown=filtered.slice(0,REP_F.limit);
+  const selCls="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-700 outline-none focus:border-inst";
   main.innerHTML=`<div class="p-6 max-w-6xl mx-auto">
-    <h1 class="text-xl font-bold text-slate-900 mb-1">Reportes › Proyectos</h1>
-    <p class="text-sm text-slate-500 mb-5">Indicadores y tabla exportable.</p>
+    <h1 class="text-xl font-bold text-slate-900 mb-1">${admin?'Reportes › Proyectos':'Mis reportes'}</h1>
+    <p class="text-sm text-slate-500 mb-5">${admin?'Indicadores y tabla exportable.':'Indicadores de tus proyectos y participación.'}</p>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-      ${kpi('Proyectos totales',PROJECTS.length,'💼')}${kpi('Tareas totales',TASKS.length,'✅')}
-      ${kpi('Miembros del equipo',MEMBERS.length,'👥')}${kpi('Tareas vencidas',venc,'⚠')}</div>
+      ${admin?kpi('Proyectos totales',PROJECTS.length,'💼'):kpi('Mis proyectos',src.length,'💼')}${admin?kpi('Tareas totales',TASKS.length,'✅'):kpi('Mis tareas',myTasks.length,'✅')}
+      ${admin?kpi('Miembros del equipo',MEMBERS.length,'👥'):kpi('Completadas',myTasks.filter(t=>t.estado==='Completada').length,'✔')}${kpi(admin?'Tareas vencidas':'Mis vencidas',venc,'⚠')}</div>
+    <div class="flex flex-wrap items-center gap-2 mb-3">
+      <select onchange="REP_F.who=this.value;renderReports()" class="${selCls}"><option value="">Todos los responsables</option>${whoOpts.map(w=>`<option value="${w}" ${REP_F.who===w?'selected':''}>${memberName(w)}</option>`).join('')}</select>
+      <select onchange="REP_F.estado=this.value;renderReports()" class="${selCls}"><option value="">Todos los estados</option>${ESTADOS.map(s=>`<option value="${s}" ${REP_F.estado===s?'selected':''}>${s}</option>`).join('')}</select>
+      <select onchange="REP_F.prioridad=this.value;renderReports()" class="${selCls}"><option value="">Toda prioridad</option>${['Alta','Media','Baja'].map(s=>`<option value="${s}" ${REP_F.prioridad===s?'selected':''}>${s}</option>`).join('')}</select>
+      ${(REP_F.who||REP_F.estado||REP_F.prioridad)?`<button onclick="REP_F.who='';REP_F.estado='';REP_F.prioridad='';renderReports()" class="text-xs text-slate-400 hover:text-rose-500 px-1">✕ limpiar</button>`:''}
+      <div class="flex items-center gap-1 ml-auto text-xs"><span class="text-slate-400 mr-1">Visibles:</span>${[10,25,50].map(n=>`<button onclick="REP_F.limit=${n};renderReports()" class="px-2.5 py-1 rounded-lg font-medium ${REP_F.limit===n?'bg-inst text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${n}</button>`).join('')}</div>
+    </div>
     <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-      <div class="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between"><span class="text-sm font-semibold text-slate-700">Detalle de proyectos</span>
-        <button class="text-xs rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-600 hover:border-inst hover:text-inst">⬇ Exportar</button></div>
+      <div class="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between"><span class="text-sm font-semibold text-slate-700">Detalle de proyectos <span class="text-xs font-normal text-slate-400">· ${shown.length} de ${filtered.length}${filtered.length!==src.length?' (de '+src.length+')':''}</span></span>
+        <button onclick="exportResumen()" class="text-xs rounded-lg bg-inst text-white px-2.5 py-1.5 hover:bg-inst-dark font-medium">🖨 Imprimir resumen ejecutivo (PDF)</button></div>
       <div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-xs text-slate-500 bg-slate-50 border-b border-slate-200">
         <th class="text-left font-semibold p-3">Título</th><th class="text-left font-semibold p-3">Responsable</th>
         <th class="font-semibold p-3">Inicio</th><th class="font-semibold p-3">Fin</th><th class="font-semibold p-3">Estado</th>
         <th class="font-semibold p-3">Prioridad</th><th class="font-semibold p-3 pr-4">Presupuesto</th></tr></thead>
-      <tbody>${PROJECTS.map(p=>{const ec=estadoColor[p.estado],pc=prioColor[p.prioridad];return `<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+      <tbody>${shown.length?shown.map(p=>{const ec=estadoColor[p.estado],pc=prioColor[p.prioridad];return `<tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50">
         <td class="p-3 font-medium text-slate-700">${p.title}</td><td class="p-3 text-slate-500">${memberName(p.ownerId)}</td>
         <td class="p-3 text-center text-slate-500">${fdate(p.inicio)}</td><td class="p-3 text-center text-slate-500">${fdate(p.fin)}</td>
         <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full bg-${ec}-100 text-${ec}-700 text-[11px]">${p.estado}</span></td>
         <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full bg-${pc}-100 text-${pc}-700 text-[11px]">${p.prioridad}</span></td>
-        <td class="p-3 pr-4 text-right text-slate-600 tabular-nums">${money(p.presupuesto)}</td></tr>`;}).join('')}</tbody></table></div></div></div>`;
+        <td class="p-3 pr-4 text-right text-slate-600 tabular-nums">${money(p.presupuesto)}</td></tr>`;}).join(''):`<tr><td colspan="7" class="p-6 text-center text-sm text-slate-400">Ningún proyecto coincide con los filtros.</td></tr>`}</tbody></table></div></div></div>`;
 }
 
 // ═══════════════ ACCIONES ═══════════════
@@ -928,7 +1101,7 @@ function nuevaInstruccion(){ openRichForm({mode:'instruccion'}); }
 function openRichForm(opts){
   const isInstr=opts.mode==='instruccion';
   const proj=opts.projectId?PROJECTS.find(p=>p.id===opts.projectId):null;
-  const st={urg:'Normal',plazo:'',fecha:'',etiquetas:[],who:isInstr?(MEMBERS.find(m=>m.role!=='Directivo')?.id||'ana'):(proj?proj.ownerId:CURRENT.id)};
+  const st={urg:'Normal',plazo:'',fecha:'',etiquetas:[],who:isInstr?(MEMBERS.find(m=>m.role!=='Directivo')?.id||CURRENT.id):(proj?proj.ownerId:CURRENT.id)};
   const ETI=['Municipio','Salud','Terreno','Interno','Documental'];
   document.getElementById('modalTitle').innerHTML=`<span class="flex items-center gap-2 text-slate-800">${isInstr?'⚡':'✅'} ${isInstr?'Instrucción directa':'Nueva tarea'}</span><span class="block text-[11px] font-normal text-slate-400 mt-0.5">${isInstr?'Sin proyecto asociado':(proj?proj.title:'Tarea directa · sin proyecto')}</span>`;
   const form=document.getElementById('modalForm');
@@ -1048,12 +1221,24 @@ function delUser(id){
   },'Eliminar usuario');
 }
 function nuevoUsuario(){
+  if(CURRENT.role!=='admin'){confirmModal('Acción no permitida','Solo un administrador puede crear usuarios.',()=>{},'Entendido');return;}
   openModal('Nuevo usuario',[
     {name:'name',label:'Nombre',required:true,full:true},
     {name:'cargo',label:'Cargo',full:true,ph:'Ej: Encargada de Salud APS, Profesional SECPLAC…'},
     {name:'area',label:'Área',type:'select',options:AREAS,value:'Salud'},
     {name:'role',label:'Rol',type:'select',options:['Funcionario','Directivo'],value:'Funcionario'},
-  ],d=>{MEMBERS.push({id:'m'+(MEMBERS.length+1),name:d.name,cargo:d.cargo||'',role:d.role,area:d.area});renderUsers();},'Crear usuario');
+    {name:'email',label:'Correo institucional (acceso)',required:true,full:true,ph:'usuario@gestionsanitaria.cl'},
+    {name:'pass',label:'Contraseña inicial',required:true,full:true,ph:'El usuario podrá cambiarla luego'},
+  ],d=>{
+    const email=(d.email||'').trim().toLowerCase(), pass=(d.pass||'').trim();
+    if(email&&USERS.find(u=>u.email.toLowerCase()===email.toLowerCase())){confirmModal('Correo en uso','Ya existe una cuenta con «'+email+'». Usa otro correo institucional.',()=>{},'Entendido');return;}
+    const id='m'+Date.now();
+    MEMBERS.push({id,name:d.name,cargo:d.cargo||'',role:d.role,area:d.area});
+    if(email&&pass)USERS.push({id,name:d.name,email,pass,role:d.role==='Directivo'?'admin':'user'});
+    const ws=WORKSPACES.find(w=>w.id===CURRENT_WS); if(ws&&!ws.userIds.includes(id))ws.userIds.push(id);
+    logAct('creó al usuario',d.name);
+    renderUsers();
+  },'Crear usuario');
 }
 
 // ═══════════════ PANEL DE DETALLE DE TAREA ═══════════════
@@ -1136,9 +1321,14 @@ function runSearch(){
   const menu=document.getElementById('searchMenu');
   if(!q){menu.classList.add('hidden');menu.innerHTML='';return;}
   const res=[];
+  // Personas visibles: admin ve a todos; el funcionario solo a quien comparte espacio o proyecto.
+  let visiblePeople=null;
+  if(CURRENT.role!=='admin'){visiblePeople=new Set([CURRENT.id]);
+    WORKSPACES.filter(w=>w.userIds.includes(CURRENT.id)).forEach(w=>w.userIds.forEach(id=>visiblePeople.add(id)));
+    PROJECTS.filter(p=>p.ownerId===CURRENT.id||(p.usuarios||[]).includes(CURRENT.id)).forEach(p=>{visiblePeople.add(p.ownerId);(p.usuarios||[]).forEach(id=>visiblePeople.add(id));});}
   visibleProjects().filter(p=>p.title.toLowerCase().includes(q)).slice(0,5).forEach(p=>res.push({ic:'💼',t:p.title,s:'Proyecto · '+memberName(p.ownerId),kind:'project',id:p.id}));
   visibleTasks().filter(t=>t.title.toLowerCase().includes(q)).slice(0,6).forEach(t=>res.push({ic:t.origin==='instruccion'?'📌':'✅',t:t.title,s:(t.origin==='instruccion'?'Instrucción':'Tarea')+' · '+efEstado(t),kind:'task',id:t.key}));
-  MEMBERS.filter(m=>(m.name+' '+(m.cargo||'')+' '+(m.area||'')).toLowerCase().includes(q)).slice(0,4).forEach(m=>res.push({ic:'👤',t:m.name,s:(m.cargo||m.role)+' · '+m.area,kind:'user',id:m.id}));
+  MEMBERS.filter(m=>(visiblePeople===null||visiblePeople.has(m.id))&&(m.name+' '+(m.cargo||'')+' '+(m.area||'')).toLowerCase().includes(q)).slice(0,4).forEach(m=>res.push({ic:'👤',t:m.name,s:(m.cargo||m.role)+' · '+m.area,kind:'user',id:m.id}));
   MEETINGS.filter(m=>m.workspaceId===CURRENT_WS&&m.title.toLowerCase().includes(q)).slice(0,3).forEach(m=>res.push({ic:'🎯',t:m.title,s:'Reunión · '+fdate(m.date),kind:'meeting',id:m.id}));
   if(!res.length){menu.innerHTML='<div class="px-4 py-4 text-sm text-slate-400 text-center">Sin resultados para «'+q+'»</div>';menu.classList.remove('hidden');return;}
   menu.innerHTML=res.map(r=>`<button onclick="searchGo('${r.kind}','${r.id}')" class="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2.5"><span>${r.ic}</span><div class="flex-1 min-w-0"><div class="text-sm text-slate-700 truncate">${r.t}</div><div class="text-[11px] text-slate-400">${r.s}</div></div></button>`).join('');
@@ -1184,7 +1374,7 @@ function clearAlerts(e){if(e)e.stopPropagation();alertList().forEach(a=>DISMISSE
 function toggleDark(e){if(e)e.stopPropagation();DARK=!DARK;document.body.classList.toggle('dark',DARK);buildUserMenu();}
 function perfilConfig(){closeMenus();const m=MEMBERS.find(x=>x.id===CURRENT.id)||{};const em=(USERS.find(u=>u.id===CURRENT.id)||{}).email||'';
   openModal('Configuración de Perfil',[{name:'name',label:'Nombre',full:true,value:CURRENT.name},{name:'cargo',label:'Cargo',full:true,value:m.cargo||''},{name:'email',label:'Correo institucional',full:true,value:em}],
-  d=>{CURRENT.name=d.name;if(m.id){m.name=d.name;m.cargo=d.cargo;}document.getElementById('userName').textContent=d.name;document.getElementById('userAvatar').textContent=initials(d.name);},'Guardar cambios');}
+  d=>{CURRENT.name=d.name;if(m.id){m.name=d.name;m.cargo=d.cargo;}document.getElementById('userName').textContent=d.name;},'Guardar cambios');}
 function cambiarPass(){closeMenus();openModal('Cambiar Contraseña',[{name:'a',label:'Contraseña actual',type:'password',full:true},{name:'b',label:'Nueva contraseña',type:'password',full:true},{name:'c',label:'Confirmar nueva contraseña',type:'password',full:true}],
   d=>{const u=USERS.find(x=>x.id===CURRENT.id);if(u&&d.b)u.pass=d.b;},'Actualizar contraseña');}
 
@@ -1193,13 +1383,12 @@ function showApp(){
   document.getElementById('app').classList.remove('hidden');
   document.getElementById('userName').textContent=CURRENT.name;
   document.getElementById('userRole').textContent=roleLabel(CURRENT.role);
-  document.getElementById('userAvatar').textContent=initials(CURRENT.name);
   buildNav(); buildBellMenu(); renderPanel();
 }
 function logout(){CURRENT=null;document.getElementById('app').classList.add('hidden');document.getElementById('login').classList.remove('hidden');document.getElementById('loginPass').value='';}
 document.getElementById('loginForm').addEventListener('submit',e=>{e.preventDefault();
   const em=document.getElementById('loginEmail').value.toLowerCase().trim(),pw=document.getElementById('loginPass').value;
-  const u=USERS.find(x=>x.email===em&&x.pass===pw);const err=document.getElementById('loginError');
+  const u=USERS.find(x=>(x.email||'').toLowerCase().trim()===em&&x.pass===pw);const err=document.getElementById('loginError');
   if(!u){err.textContent='Credenciales inválidas.';err.classList.remove('hidden');return;}
   err.classList.add('hidden');CURRENT=u;showApp();});
 document.querySelectorAll('.fill').forEach(b=>b.addEventListener('click',()=>{const[a,c]=b.dataset.fill.split('|');document.getElementById('loginEmail').value=a;document.getElementById('loginPass').value=c;}));
