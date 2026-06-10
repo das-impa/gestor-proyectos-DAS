@@ -6,6 +6,7 @@
 <title>Control de Gestión · Pozo Almonte</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script>
@@ -138,6 +139,10 @@
 </div>
 
 <script>
+// ═══════════════ CONEXIÓN SUPABASE ═══════════════
+const SB_URL='https://kianrcgzpnzfmeklmjww.supabase.co';
+const SB_KEY='sb_publishable_l6vqjgK-4fDKo1MkpcBOZg_r_U7pz8v';
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
 // ═══════════════ DATOS (modelo IMPA) ═══════════════
 const HOY='2026-06-09';
 const ESTADOS=['Pendiente','En Progreso','En Revisión','Completada'];
@@ -1135,17 +1140,26 @@ function openRichForm(opts){
     if(i>=0){st.etiquetas.splice(i,1);b.className=`eti rounded-lg border px-3 py-1.5 text-sm border-${lc}-300 text-${lc}-700`;}
     else{st.etiquetas.push(e);b.className=`eti rounded-lg border px-3 py-1.5 text-sm border-${lc}-500 bg-${lc}-500 text-white`;}});
   document.getElementById('rf_who').onchange=e=>st.who=e.target.value;
-  form.onsubmit=e=>{e.preventDefault();const q=document.getElementById('rf_q').value.trim();if(!q){document.getElementById('rf_q').focus();return;}
+  form.onsubmit=async e=>{e.preventDefault();const q=document.getElementById('rf_q').value.trim();if(!q){document.getElementById('rf_q').focus();return;}
     let vence=null;
     if(st.plazo==='__c'&&st.fecha)vence=st.fecha;
     else if(st.plazo!==''&&st.plazo!=='__c'){const dt=new Date('2026-06-09T00:00:00');dt.setDate(dt.getDate()+ +st.plazo);vence=dt.toISOString().slice(0,10);}
     const prioridad={Normal:'Media',Alta:'Alta',Urgente:'Alta'}[st.urg];
     const eti=[...st.etiquetas]; if(st.urg==='Urgente'&&!eti.includes('Urgente'))eti.push('Urgente');
     const pres=+(document.getElementById('rf_pres')?.value)||0, ga=+(document.getElementById('rf_gasto')?.value)||0;
+    const n=TASKS.length+1;
     closeModal();
-    if(isInstr){TASKS.push({key:'INS-'+(TASKS.length+1),title:q,projectId:null,who:st.who,estado:'Pendiente',prioridad,vence,presupuesto:0,etiquetas:eti,checklist:[],comments:0,gastos:[],archivos:[],origin:'instruccion',enviadaPor:CURRENT.name,workspaceId:CURRENT_WS});logAct('envió una instrucción a '+memberName(st.who).split(' ')[0],q);}
-    else{TASKS.push({key:'T-'+(TASKS.length+1),title:q,projectId:opts.projectId||null,who:st.who,estado:opts.estado||'Pendiente',prioridad,vence,presupuesto:pres,etiquetas:eti,checklist:[],comments:0,gastos:ga>0?[{monto:ga,desc:'Gasto inicial',fecha:HOY}]:[],archivos:[],origin:opts.projectId?'propia':'directa',workspaceId:CURRENT_WS});logAct('creó la tarea',q);}
-    REDRAW();};
+    if(isInstr){
+      const {data:row,error}=await sb.from('tasks').insert({task_key:'INS-'+n,workspace_id:CURRENT_WS,project_id:null,title:q,assignee_id:st.who,estado:'Pendiente',prioridad,vence,presupuesto:0,etiquetas:eti,origin:'instruccion',enviada_por:CURRENT.name}).select().single();
+      if(dbErr(error,'No se pudo enviar la instrucción'))return;
+      await dbAct('envió una instrucción a '+memberName(st.who).split(' ')[0],q);
+    } else {
+      const {data:row,error}=await sb.from('tasks').insert({task_key:(opts.projectId?'T-':'D-')+n,workspace_id:CURRENT_WS,project_id:opts.projectId||null,title:q,assignee_id:st.who,estado:opts.estado||'Pendiente',prioridad,vence,presupuesto:pres,etiquetas:eti,origin:opts.projectId?'propia':'directa'}).select().single();
+      if(dbErr(error,'No se pudo crear la tarea'))return;
+      if(ga>0){await sb.from('task_expenses').insert({task_id:row.id,monto:ga,descripcion:'Gasto inicial',fecha:HOY});}
+      await dbAct('creó la tarea',q);
+    }
+    await loadAll(); REDRAW();};
   document.getElementById('modalBackdrop').classList.remove('hidden');
   setTimeout(()=>document.getElementById('rf_q').focus(),40);
 }
@@ -1177,10 +1191,13 @@ function openProjectForm(){
       <button type="submit" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm font-semibold px-4 py-2">Crear proyecto</button></div>`;
   form.querySelectorAll('.usr').forEach(b=>b.onclick=()=>{const u=b.dataset.u,i=sel.usuarios.indexOf(u);if(i>=0){if(sel.usuarios.length>1)sel.usuarios.splice(i,1);}else sel.usuarios.push(u);b.className=`usr rounded-lg border px-2.5 py-1.5 text-sm ${sel.usuarios.includes(u)?'border-inst bg-inst text-white':'border-slate-200 text-slate-600'}`;});
   form.querySelectorAll('.eti2').forEach(b=>b.onclick=()=>{const e=b.dataset.e,lc=labelColor(e),i=sel.etiquetas.indexOf(e);if(i>=0){sel.etiquetas.splice(i,1);b.className=`eti2 rounded-lg border px-2.5 py-1.5 text-sm border-${lc}-300 text-${lc}-700`;}else{sel.etiquetas.push(e);b.className=`eti2 rounded-lg border px-2.5 py-1.5 text-sm border-${lc}-500 bg-${lc}-500 text-white`;}});
-  form.onsubmit=e=>{e.preventDefault();const title=document.getElementById('pf_title').value.trim();if(!title){document.getElementById('pf_title').focus();return;}
+  form.onsubmit=async e=>{e.preventDefault();const title=document.getElementById('pf_title').value.trim();if(!title){document.getElementById('pf_title').focus();return;}
     const cols=['emerald','blue','amber','rose','violet'];closeModal();
-    PROJECTS.push({id:'p'+(PROJECTS.length+1),title,ownerId:sel.usuarios[0],estado:document.getElementById('pf_estado').value,prioridad:document.getElementById('pf_prio').value||'Media',inicio:document.getElementById('pf_ini').value||HOY,fin:document.getElementById('pf_fin').value||null,presupuesto:+document.getElementById('pf_pres').value||0,etiquetas:sel.etiquetas,color:cols[PROJECTS.length%cols.length],desc:document.getElementById('pf_desc').value,workspaceId:CURRENT_WS,usuarios:sel.usuarios});
-    renderProjects();};
+    const {data:np,error}=await sb.from('projects').insert({workspace_id:CURRENT_WS,title,owner_id:sel.usuarios[0],estado:document.getElementById('pf_estado').value,prioridad:document.getElementById('pf_prio').value||'Media',inicio:document.getElementById('pf_ini').value||HOY,fin:document.getElementById('pf_fin').value||null,presupuesto:+document.getElementById('pf_pres').value||0,etiquetas:sel.etiquetas,color:cols[PROJECTS.length%cols.length],descripcion:document.getElementById('pf_desc').value}).select().single();
+    if(dbErr(error,'No se pudo crear el proyecto'))return;
+    if(sel.usuarios.length){await sb.from('project_members').insert(sel.usuarios.map(u=>({project_id:np.id,profile_id:u})));}
+    await dbAct('creó el proyecto',title);
+    await loadAll(); renderProjects();};
   document.getElementById('modalBackdrop').classList.remove('hidden');
   setTimeout(()=>document.getElementById('pf_title').focus(),40);
 }
@@ -1196,14 +1213,14 @@ function confirmModal(title,msg,onYes,yesLabel){
 }
 function delTask(key){const t=TASKS.find(x=>x.key===key);if(!t)return;const p=t.projectId?PROJECTS.find(x=>x.id===t.projectId):null;
   const can=CURRENT.role==='admin'||(p?canEditProject(p):t.who===CURRENT.id);if(!can)return;
-  confirmModal('Eliminar tarea','¿Seguro que deseas eliminar «'+t.title+'»? Esta acción no se puede deshacer.',()=>{const i=TASKS.indexOf(t);if(i>=0)TASKS.splice(i,1);logAct('eliminó la tarea',t.title);closeTask();REDRAW();},'Eliminar');
+  confirmModal('Eliminar tarea','¿Seguro que deseas eliminar «'+t.title+'»? Esta acción no se puede deshacer.',async()=>{const {error}=await sb.from('tasks').delete().eq('id',t.id);if(dbErr(error,'No se pudo eliminar la tarea'))return;await dbAct('eliminó la tarea',t.title);closeTask();await loadAll();REDRAW();},'Eliminar');
 }
 function delProject(pid){const p=PROJECTS.find(x=>x.id===pid);if(!p||!canEditProject(p))return;
   const leader=wsLeaderOf(p.workspaceId||'ws1');const isLeader=CURRENT.role==='admin'||CURRENT.id===leader;
-  if(isLeader)confirmModal('Eliminar proyecto','¿Seguro que deseas eliminar el proyecto «'+p.title+'» y todas sus tareas? Esta acción no se puede deshacer.',()=>{PROJECTS.splice(PROJECTS.indexOf(p),1);TASKS=TASKS.filter(t=>t.projectId!==pid);logAct('eliminó el proyecto',p.title);renderProjects();},'Eliminar');
+  if(isLeader)confirmModal('Eliminar proyecto','¿Seguro que deseas eliminar el proyecto «'+p.title+'» y todas sus tareas? Esta acción no se puede deshacer.',async()=>{const {error}=await sb.from('projects').delete().eq('id',pid);if(dbErr(error,'No se pudo eliminar el proyecto'))return;await dbAct('eliminó el proyecto',p.title);await loadAll();renderProjects();},'Eliminar');
   else confirmModal('Solicitar eliminación','No eres el líder del espacio. Se enviará una solicitud al líder para aprobar la eliminación de «'+p.title+'». ¿Continuar?',()=>{p.pendingDelete=CURRENT.id;renderProject(pid);},'Enviar solicitud');
 }
-function aprobarDelete(pid){const p=PROJECTS.find(x=>x.id===pid);if(!p)return;confirmModal('Aprobar eliminación','¿Aprobar la eliminación del proyecto «'+p.title+'» solicitada por '+memberName(p.pendingDelete)+'?',()=>{PROJECTS.splice(PROJECTS.indexOf(p),1);TASKS=TASKS.filter(t=>t.projectId!==pid);logAct('aprobó y eliminó el proyecto',p.title);renderProjects();},'Aprobar y eliminar');}
+function aprobarDelete(pid){const p=PROJECTS.find(x=>x.id===pid);if(!p)return;confirmModal('Aprobar eliminación','¿Aprobar la eliminación del proyecto «'+p.title+'» solicitada por '+memberName(p.pendingDelete)+'?',async()=>{const {error}=await sb.from('projects').delete().eq('id',pid);if(dbErr(error,'No se pudo eliminar el proyecto'))return;await dbAct('aprobó y eliminó el proyecto',p.title);await loadAll();renderProjects();},'Aprobar y eliminar');}
 function rechazarDelete(pid){const p=PROJECTS.find(x=>x.id===pid);if(p){p.pendingDelete=null;renderProject(pid);}}
 
 function delUser(id){
@@ -1385,13 +1402,51 @@ function showApp(){
   document.getElementById('userRole').textContent=roleLabel(CURRENT.role);
   buildNav(); buildBellMenu(); renderPanel();
 }
-function logout(){CURRENT=null;document.getElementById('app').classList.add('hidden');document.getElementById('login').classList.remove('hidden');document.getElementById('loginPass').value='';}
-document.getElementById('loginForm').addEventListener('submit',e=>{e.preventDefault();
+async function logout(){try{await sb.auth.signOut();}catch(e){}CURRENT=null;document.getElementById('app').classList.add('hidden');document.getElementById('login').classList.remove('hidden');document.getElementById('loginPass').value='';}
+// ═══ Carga de datos reales desde Supabase ═══
+async function loadAll(){
+  const q=async (t,sel='*')=>{const{data,error}=await sb.from(t).select(sel);if(error)console.warn('load '+t,error.message);return data||[];};
+  const [profs,wss,wms,prs,pms,tks,subs,exps,obs,tfs,mts,mas,evs,nts,tbs,acts]=await Promise.all(
+    ['profiles','workspaces','workspace_members','projects','project_members','tasks','subtasks','task_expenses','task_observations','task_files','meetings','meeting_attendees','events','notes','time_blocks','activities'].map(t=>q(t)));
+  MEMBERS=profs.map(p=>({id:p.id,name:p.name,role:p.role==='admin'?'Directivo':'Funcionario',area:p.area||'',cargo:p.cargo||'',email:p.email}));
+  WORKSPACES=wss.map(w=>({id:w.id,name:w.name,primary:w.is_primary,leader:w.leader_id,userIds:wms.filter(m=>m.workspace_id===w.id).map(m=>m.profile_id)}));
+  PROJECTS=prs.map(p=>({id:p.id,title:p.title,ownerId:p.owner_id,estado:p.estado,prioridad:p.prioridad,inicio:p.inicio,fin:p.fin,presupuesto:p.presupuesto,color:p.color||'blue',etiquetas:p.etiquetas||[],desc:p.descripcion||'',workspaceId:p.workspace_id,usuarios:pms.filter(m=>m.project_id===p.id).map(m=>m.profile_id)}));
+  TASKS=tks.map(t=>({id:t.id,key:t.task_key||t.id,title:t.title,projectId:t.project_id,who:t.assignee_id,estado:t.estado,prioridad:t.prioridad,vence:t.vence,presupuesto:t.presupuesto,col:t.col,done:t.done,origin:t.origin,enviadaPor:t.enviada_por,workspaceId:t.workspace_id,etiquetas:t.etiquetas||[],desc:t.descripcion||'',
+    checklist:subs.filter(s=>s.task_id===t.id).sort((a,b)=>a.position-b.position).map(s=>({text:s.text,done:s.done,doneAt:s.done_at})),
+    gastos:exps.filter(g=>g.task_id===t.id).map(g=>({monto:g.monto,desc:g.descripcion,fecha:g.fecha})),
+    _c:obs.filter(o=>o.task_id===t.id).map(o=>({w:o.author_name,t:o.text})),
+    archivos:tfs.filter(f=>f.task_id===t.id).map(f=>({name:f.name,size:f.size})),
+    comments:obs.filter(o=>o.task_id===t.id).length}));
+  MEETINGS=mts.map(m=>({id:m.id,title:m.title,date:m.date,time:m.time,place:m.place,notes:m.notes,workspaceId:m.workspace_id,attendees:mas.filter(a=>a.meeting_id===m.id).map(a=>a.profile_id)}));
+  EVENTS=evs.map(e=>({id:e.id,title:e.title,date:e.date,workspaceId:e.workspace_id}));
+  NOTES=nts.map(n=>({id:n.id,userId:n.owner_id,title:n.title,body:n.body,updated:n.updated_at}));
+  TIMEBLOCKS=tbs.map(b=>({id:b.id,userId:b.owner_id,day:b.day,start:+b.start_h,end:+b.end_h,title:b.title,color:b.color}));
+  ACTIVITY=acts.sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(a=>({who:a.actor_id,action:a.action,obj:a.object_text,ts:'',at:new Date(a.created_at).getTime()}));
+}
+async function dbAct(action,obj){ try{ await sb.from('activities').insert({actor_id:CURRENT.id, action, object_text:obj}); }catch(e){} }
+function dbErr(error,msg){ if(error){ confirmModal('No se pudo guardar', (msg||'Ocurrió un error')+': '+error.message, ()=>{}, 'Entendido'); return true; } return false; }
+async function afterAuth(uid){
+  const {data:prof}=await sb.from('profiles').select('*').eq('id',uid).single();
+  if(!prof){return false;}
+  CURRENT={id:prof.id,name:prof.name,email:prof.email,role:prof.role};
+  await loadAll();
+  const myWs=WORKSPACES.filter(w=>CURRENT.role==='admin'||w.userIds.includes(CURRENT.id));
+  CURRENT_WS=(myWs.find(w=>w.primary)||myWs[0]||{id:null}).id||CURRENT_WS;
+  return true;
+}
+document.getElementById('loginForm').addEventListener('submit',async e=>{e.preventDefault();
   const em=document.getElementById('loginEmail').value.toLowerCase().trim(),pw=document.getElementById('loginPass').value;
-  const u=USERS.find(x=>(x.email||'').toLowerCase().trim()===em&&x.pass===pw);const err=document.getElementById('loginError');
-  if(!u){err.textContent='Credenciales inválidas.';err.classList.remove('hidden');return;}
-  err.classList.add('hidden');CURRENT=u;showApp();});
-document.querySelectorAll('.fill').forEach(b=>b.addEventListener('click',()=>{const[a,c]=b.dataset.fill.split('|');document.getElementById('loginEmail').value=a;document.getElementById('loginPass').value=c;}));
+  const err=document.getElementById('loginError');const btn=e.target.querySelector('button[type=submit]');
+  err.classList.add('hidden');btn.disabled=true;const lbl=btn.textContent;btn.textContent='Ingresando…';
+  try{
+    const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
+    if(error){err.textContent='Credenciales inválidas.';err.classList.remove('hidden');return;}
+    const ok=await afterAuth(data.user.id);
+    if(!ok){err.textContent='Tu cuenta no tiene perfil asignado. Contacta al administrador.';err.classList.remove('hidden');await sb.auth.signOut();return;}
+    showApp();
+  }catch(ex){err.textContent='Error de conexión. Intenta nuevamente.';err.classList.remove('hidden');}
+  finally{btn.disabled=false;btn.textContent=lbl;}
+});
 document.getElementById('bellBtn').onclick=e=>{e.stopPropagation();const m=document.getElementById('bellMenu');document.getElementById('userMenu').classList.add('hidden');if(m.classList.contains('hidden')){buildBellMenu();m.classList.remove('hidden');}else m.classList.add('hidden');};
 document.getElementById('userBtn').onclick=e=>{e.stopPropagation();const m=document.getElementById('userMenu');document.getElementById('bellMenu').classList.add('hidden');if(m.classList.contains('hidden')){buildUserMenu();m.classList.remove('hidden');}else m.classList.add('hidden');};
 document.getElementById('userMenu').onclick=e=>e.stopPropagation();
@@ -1399,6 +1454,8 @@ document.getElementById('bellMenu').onclick=e=>e.stopPropagation();
 const _si=document.getElementById('searchInput'); if(_si){_si.oninput=runSearch; _si.onclick=e=>{e.stopPropagation();if(_si.value.trim())runSearch();};}
 const _sm=document.getElementById('searchMenu'); if(_sm)_sm.onclick=e=>e.stopPropagation();
 document.addEventListener('click',closeMenus);
+// ═══ Restaurar sesión activa al recargar ═══
+(async()=>{try{const{data}=await sb.auth.getSession();if(data&&data.session){const ok=await afterAuth(data.session.user.id);if(ok)showApp();}}catch(e){console.warn('resume',e);}})();
 </script>
 </body>
 </html>
