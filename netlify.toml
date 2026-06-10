@@ -1,12 +1,14 @@
 # ── Netlify · DAS Control de Gestión Sanitaria (Pozo Almonte) ───────────
 # Despliegue HÍBRIDO: sitio estático (prototype/) + backend Supabase.
-# La conexión a Supabase (URL + clave pública) ya va dentro de index.html,
-# por eso NO se requieren variables de entorno ni build.
+# La conexión a Supabase (URL + clave pública) ya va dentro de index.html.
+#
+# IMPORTANTE: base="prototype" hace que Netlify SOLO mire esa carpeta.
+# Así NO detecta el Next.js de apps/web y publica el sitio estático tal cual.
 
 [build]
-  # Publica la carpeta del prototipo tal cual (HTML + assets). Sin compilación.
-  publish = "prototype"
-  command = ""
+  base = "prototype"   # Netlify entra a esta carpeta (sin frameworks → sin build)
+  publish = "."        # publica el contenido de prototype/ (index.html + assets)
+  command = ""         # sin compilación
 
 # Cualquier ruta sirve la app (es una sola página).
 [[redirects]]
@@ -21,6 +23,3 @@
     X-Frame-Options = "SAMEORIGIN"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-
-# Nota: el frontend Next.js en apps/web queda como alternativa futura
-# (su build usaba @netlify/plugin-nextjs). Hoy el producto es el prototipo.
