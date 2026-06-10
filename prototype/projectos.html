@@ -1242,7 +1242,23 @@ function delUser(id){
 }
 function nuevoUsuario(){
   if(CURRENT.role!=='admin'){confirmModal('Acción no permitida','Solo un administrador puede crear usuarios.',()=>{},'Entendido');return;}
-  confirmModal('Crear usuario','La creación de cuentas con acceso se habilitará en el siguiente paso (función servidor). Por ahora, agrega al usuario desde el panel de Supabase → <b>Authentication → Add user</b> (correo + contraseña + Auto Confirm). Aparecerá aquí automáticamente y podrás asignarle cargo, área y espacio.',()=>{},'Entendido');
+  openModal('Nuevo usuario',[
+    {name:'name',label:'Nombre',required:true,full:true},
+    {name:'cargo',label:'Cargo',full:true,ph:'Ej: Encargada de Salud APS, Profesional SECPLAC…'},
+    {name:'area',label:'Área',type:'select',options:AREAS,value:'Salud'},
+    {name:'role',label:'Rol',type:'select',options:['Funcionario','Directivo'],value:'Funcionario'},
+    {name:'email',label:'Correo institucional (acceso)',required:true,full:true,ph:'usuario@gestionsanitaria.cl'},
+    {name:'pass',label:'Contraseña inicial',required:true,full:true,ph:'Mínimo 6 caracteres · el usuario podrá cambiarla'},
+  ],async d=>{
+    const {data,error}=await sb.functions.invoke('crear-usuario',{body:{
+      name:d.name, email:(d.email||'').trim().toLowerCase(), password:d.pass,
+      role:d.role==='Directivo'?'admin':'user', cargo:d.cargo||'', area:d.area, workspaceId:CURRENT_WS
+    }});
+    const err=(error&&error.message)||(data&&data.error);
+    if(err){confirmModal('No se pudo crear el usuario',err,()=>{},'Entendido');return;}
+    await dbAct('creó al usuario',d.name);
+    await loadAll(); renderUsers();
+  },'Crear usuario');
 }
 
 // ═══════════════ PANEL DE DETALLE DE TAREA ═══════════════
