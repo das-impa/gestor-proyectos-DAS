@@ -1,0 +1,13 @@
+{
+  "name": "DAS Control de Gestión Sanitaria",
+  "short_name": "DAS Gestión",
+  "description": "Plataforma de Control de Gestión · Ilustre Municipalidad de Pozo Almonte",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1e3a8a",
+  "theme_color": "#1e3a8a",
+  "icons": [
+    { "src": "logo-das.png", "sizes": "225x225", "type": "image/png", "purpose": "any" }
+  ]
+}
