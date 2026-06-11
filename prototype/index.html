@@ -233,6 +233,7 @@ function buildNav(){
   const admin=CURRENT.role==='admin';
   const items=[
     ['panel','🏠 Panel'],
+    ['prioridades','🔥 Prioridades'],
     ['espacios','🗂 Espacios de trabajo'],
     ['projects','💼 Proyectos'],
     ['tasks','✅ Tareas'],
@@ -264,7 +265,7 @@ function buildNav(){
   const wb=document.getElementById('wsChipBtn'); if(wb)wb.onclick=e=>{e.stopPropagation();document.getElementById('wsMenu').classList.toggle('hidden');};
   const wm=document.getElementById('wsMenu'); if(wm)wm.onclick=e=>e.stopPropagation();
 }
-const SCREENS={panel:renderPanel,espacios:renderEspacios,projects:renderProjects,tasks:renderTasks,timebox:renderTimebox,instrucciones:renderInstrucciones,
+const SCREENS={panel:renderPanel,prioridades:renderPrioridades,espacios:renderEspacios,projects:renderProjects,tasks:renderTasks,timebox:renderTimebox,instrucciones:renderInstrucciones,
   users:renderUsers,rendimiento:renderTeamDash,reports:renderReports,meetings:renderMeetings,notes:renderNotes,
   calendar:renderCalendarScreen,activity:renderActivity};
 
@@ -526,6 +527,38 @@ function teamCharts(rows){
       </div>
     </div>
   </div>`;}
+// ═══ PRIORIDADES (matriz urgente / importante) ═══
+function renderPrioridades(){REDRAW=renderPrioridades;
+  const limU=(()=>{const d=new Date(HOY+'T00:00:00');d.setDate(d.getDate()+3);return d.toISOString().slice(0,10);})();
+  const tasks=visibleTasks().filter(t=>t.estado!=='Completada');
+  const esImp=t=>t.prioridad==='Alta';
+  const esUrg=t=>!!t.vence&&t.vence<=limU;
+  const q={hu:[],hn:[],uu:[],nn:[]};
+  tasks.forEach(t=>{const i=esImp(t),u=esUrg(t);if(i&&u)q.hu.push(t);else if(i&&!u)q.hn.push(t);else if(!i&&u)q.uu.push(t);else q.nn.push(t);});
+  const ord=(a,b)=>(a.vence||'9999').localeCompare(b.vence||'9999');
+  Object.values(q).forEach(l=>l.sort(ord));
+  const card=t=>{const pc=prioColor[t.prioridad];return `<div onclick="openTask('${t.key}')" class="cursor-pointer rounded-lg border border-slate-200 bg-white p-2.5 hover:shadow-sm">
+    <div class="text-sm font-medium text-slate-700 leading-snug">${t.origin==='instruccion'?'📌 ':''}${t.title}</div>
+    <div class="flex items-center flex-wrap gap-2 mt-1 text-[11px]">
+      <span class="px-1.5 py-0.5 rounded bg-${pc}-100 text-${pc}-700 font-medium">${t.prioridad}</span>
+      <span class="text-slate-500">👤 ${memberName(t.who).split(' ')[0]}</span>
+      ${t.vence?`<span class="${isVencida(t)?'text-rose-600 font-semibold':'text-slate-400'}">📅 ${fdate(t.vence)}${isVencida(t)?' · vencida':''}</span>`:''}
+    </div></div>`;};
+  const quad=(title,sub,color,list)=>`<div class="rounded-xl border-2 border-${color}-300 bg-white p-3 shadow-sm">
+    <div class="flex items-center justify-between mb-2"><div><div class="font-bold text-${color}-600 text-sm">${title}</div><div class="text-[11px] text-slate-500">${sub}</div></div><span class="text-xs font-bold text-${color}-700 bg-${color}-100 rounded-full px-2 py-0.5">${list.length}</span></div>
+    <div class="space-y-2 max-h-80 overflow-y-auto pr-1">${list.length?list.map(card).join(''):'<div class="text-xs text-slate-400 py-4 text-center">Sin tareas aquí.</div>'}</div></div>`;
+  main.innerHTML=`<div class="p-6 max-w-6xl mx-auto">
+    <h1 class="text-xl font-bold text-slate-900 mb-1">🔥 Prioridades</h1>
+    <p class="text-sm text-slate-500 mb-5">Matriz urgente / importante · ${CURRENT.role==='admin'?'todo el espacio':'tus tareas e instrucciones'} · ${wsName(CURRENT_WS)}</p>
+    <div class="grid md:grid-cols-2 gap-4">
+      ${quad('🔴 Hacer ahora','Importante y urgente','rose',q.hu)}
+      ${quad('🔵 Planificar','Importante, sin apuro','blue',q.hn)}
+      ${quad('🟡 Atender pronto','Urgente, prioridad media/baja','amber',q.uu)}
+      ${quad('⚪ Cuando se pueda','Ni urgente ni prioritario','slate',q.nn)}
+    </div>
+    <div class="text-[11px] text-slate-400 mt-3">Importante = prioridad <b>Alta</b> · Urgente = vencida o vence en ≤3 días · Las completadas no aparecen. Haz clic en una tarea para abrirla.</div>
+  </div>`;
+}
 // ═══ REGISTRO DE ACTIVIDADES ═══
 function renderActivity(){REDRAW=renderActivity; purgeActivity();
   main.innerHTML=`<div class="p-6 max-w-3xl mx-auto"><h1 class="text-xl font-bold text-slate-900 mb-1">Registro de actividades</h1>
