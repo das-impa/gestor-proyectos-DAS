@@ -877,6 +877,21 @@ function editarResponsables(pid){const p=PROJECTS.find(x=>x.id===pid);if(!p||!ca
     await dbAct('actualizó los responsables de',p.title);
     await loadAll(); renderProject(pid);};
   document.getElementById('modalBackdrop').classList.remove('hidden');}
+function moverProyecto(pid){const p=PROJECTS.find(x=>x.id===pid);if(!p)return;
+  if(!(CURRENT.role==='admin'||wsLeaderOf(p.workspaceId)===CURRENT.id)){confirmModal('Acción no permitida','Solo el administrador o el líder del espacio puede mover proyectos.',()=>{},'Entendido');return;}
+  const opciones=WORKSPACES.filter(w=>w.id!==(p.workspaceId||'ws1')&&(CURRENT.role==='admin'||w.userIds.includes(CURRENT.id)));
+  if(!opciones.length){confirmModal('Sin destino','No hay otros espacios de trabajo disponibles para mover este proyecto.',()=>{},'Entendido');return;}
+  openModal('Mover proyecto',[
+    {name:'ws',label:'Mover «'+p.title+'» al espacio de trabajo:',type:'select',full:true,options:opciones.map(w=>({v:w.id,l:w.name})),value:opciones[0].id},
+  ],async d=>{
+    const {error}=await sb.from('projects').update({workspace_id:d.ws}).eq('id',pid);
+    if(dbErr(error,'No se pudo mover el proyecto'))return;
+    await sb.from('tasks').update({workspace_id:d.ws}).eq('project_id',pid);
+    await dbAct('movió el proyecto «'+p.title+'» a',wsName(d.ws));
+    CURRENT_WS=d.ws;
+    await loadAll(); buildNav(); renderProject(pid);
+  },'Mover proyecto');
+}
 function editarPresupuesto(pid){const p=PROJECTS.find(x=>x.id===pid);if(!p||!canEditProject(p))return;
   openModal('Presupuesto del proyecto',[{name:'pres',label:'Presupuesto total asignado ($)',type:'number',full:true,value:p.presupuesto||0}],
   async d=>{const v=Math.max(+d.pres||0,0);const {error}=await sb.from('projects').update({presupuesto:v}).eq('id',pid);if(dbErr(error,'No se pudo guardar el presupuesto'))return;await dbAct('actualizó el presupuesto de',p.title);await loadAll();renderProject(pid);},'Guardar presupuesto');}
@@ -890,6 +905,7 @@ function renderProject(pid){
     <div class="flex items-center justify-between mt-1">
       <div class="flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-full bg-${p.color}-500"></span><h1 class="text-xl font-bold text-slate-900">${p.title}</h1></div>
       <div class="flex items-center gap-2">
+        ${(CURRENT.role==='admin'||wsLeaderOf(p.workspaceId)===CURRENT.id)?`<button onclick="moverProyecto('${pid}')" class="rounded-lg border border-slate-200 text-slate-600 hover:border-inst hover:text-inst text-sm px-3 py-2">📦 Mover</button>`:''}
         ${canEditProject(p)?`<button onclick="openProjectForm('${pid}')" class="rounded-lg border border-slate-200 text-slate-600 hover:border-inst hover:text-inst text-sm px-3 py-2">✏ Editar</button>`:''}
         ${canEditProject(p)?`<button onclick="delProject('${pid}')" class="rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-sm px-3 py-2">🗑 Eliminar</button>`:''}
         ${canEditProject(p)?'<button onclick="addTask()" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm font-medium px-3 py-2">+ Tarea</button>':'<span class="text-xs text-slate-400 flex items-center gap-1 bg-slate-100 px-2.5 py-1.5 rounded-lg">🔒 Solo lectura</span>'}
