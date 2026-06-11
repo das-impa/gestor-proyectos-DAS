@@ -614,26 +614,17 @@ function renderPrioridades(){REDRAW=renderPrioridades;
     <div class="text-[11px] text-slate-400 mt-3">Escribe tus prioridades en cualquier cuadrante (independientes de las tareas). Las <b>tareas</b> del sistema se ubican solas según prioridad (Alta) y plazo (≤3 días).</div>
   </div>`;
 }
-async function addPrioItem(key){const i=document.getElementById('prio_in_'+key);const t=(i&&i.value||'').trim();if(!t)return;
-  const {error}=await sb.from('priority_items').insert({owner_id:CURRENT.id,text:t,quadrant:key,position:PRIOLIST.length});
-  if(dbErr(error,'No se pudo agregar la prioridad'))return;
-  await loadAll(); renderPrioridades(); const ni=document.getElementById('prio_in_'+key); if(ni)ni.focus();}
-async function togglePrioItem(id,done){
-  const {error}=await sb.from('priority_items').update({done,done_at:done?new Date().toISOString():null}).eq('id',id);
-  if(error){await loadAll();renderPrioridades();return;}
-  await loadAll(); renderPrioridades();}
-async function editPrioItem(id,text){const t=(text||'').trim();const it=PRIOLIST.find(x=>x.id===id);if(!it)return;
-  if(!t){await delPrioItem(id);return;}
-  if(it.text===t)return; it.text=t;
-  const {error}=await sb.from('priority_items').update({text:t}).eq('id',id);
-  if(error){await loadAll();renderPrioridades();}}
-async function delPrioItem(id){await sb.from('priority_items').delete().eq('id',id);await loadAll();renderPrioridades();}
+// ── Prioridades personales: se guardan en el navegador (localStorage), por usuario ──
+function loadPrio(){try{PRIOLIST=JSON.parse(localStorage.getItem('prio_'+(CURRENT&&CURRENT.id))||'[]');}catch(e){PRIOLIST=[];}if(!Array.isArray(PRIOLIST))PRIOLIST=[];}
+function savePrio(){try{localStorage.setItem('prio_'+(CURRENT&&CURRENT.id),JSON.stringify(PRIOLIST));}catch(e){}}
+function addPrioItem(key){const i=document.getElementById('prio_in_'+key);const t=(i&&i.value||'').trim();if(!t)return;
+  PRIOLIST.push({id:'p'+Date.now()+'-'+Math.floor(Math.random()*100000),text:t,done:false,doneAt:null,quadrant:key,position:PRIOLIST.length});
+  savePrio(); renderPrioridades(); const ni=document.getElementById('prio_in_'+key); if(ni)ni.focus();}
+function togglePrioItem(id,done){const it=PRIOLIST.find(x=>x.id===id);if(!it)return;it.done=done;it.doneAt=done?new Date().toISOString():null;savePrio();renderPrioridades();}
+function editPrioItem(id,text){const t=(text||'').trim();const it=PRIOLIST.find(x=>x.id===id);if(!it)return;if(!t){delPrioItem(id);return;}it.text=t;savePrio();}
+function delPrioItem(id){const i=PRIOLIST.findIndex(x=>x.id===id);if(i>=0)PRIOLIST.splice(i,1);savePrio();renderPrioridades();}
 function limpiarPrioridades(){const done=PRIOLIST.filter(x=>x.done);if(!done.length)return;
-  confirmModal('Limpiar completadas','¿Eliminar las '+done.length+' prioridad(es) ya completadas de tu lista? Esta acción no se puede deshacer.',async()=>{
-    const {error}=await sb.from('priority_items').delete().eq('owner_id',CURRENT.id).eq('done',true);
-    if(dbErr(error,'No se pudo limpiar la lista'))return;
-    await loadAll(); renderPrioridades();
-  },'Limpiar');}
+  confirmModal('Limpiar completadas','¿Eliminar las '+done.length+' prioridad(es) ya completadas de tu lista?',()=>{PRIOLIST=PRIOLIST.filter(x=>!x.done);savePrio();renderPrioridades();},'Limpiar');}
 // ═══ REGISTRO DE ACTIVIDADES ═══
 function renderActivity(){REDRAW=renderActivity; purgeActivity();
   main.innerHTML=`<div class="p-6 max-w-3xl mx-auto"><h1 class="text-xl font-bold text-slate-900 mb-1">Registro de actividades</h1>
@@ -1555,8 +1546,8 @@ async function logout(){try{await sb.auth.signOut();}catch(e){}CURRENT=null;docu
 // ═══ Carga de datos reales desde Supabase ═══
 async function loadAll(){
   const q=async (t,sel='*')=>{const{data,error}=await sb.from(t).select(sel);if(error)console.warn('load '+t,error.message);return data||[];};
-  const [profs,wss,wms,prs,pms,tks,subs,exps,obs,tfs,mts,mas,evs,nts,tbs,acts,pris]=await Promise.all(
-    ['profiles','workspaces','workspace_members','projects','project_members','tasks','subtasks','task_expenses','task_observations','task_files','meetings','meeting_attendees','events','notes','time_blocks','activities','priority_items'].map(t=>q(t)));
+  const [profs,wss,wms,prs,pms,tks,subs,exps,obs,tfs,mts,mas,evs,nts,tbs,acts]=await Promise.all(
+    ['profiles','workspaces','workspace_members','projects','project_members','tasks','subtasks','task_expenses','task_observations','task_files','meetings','meeting_attendees','events','notes','time_blocks','activities'].map(t=>q(t)));
   MEMBERS=profs.map(p=>({id:p.id,name:p.name,role:p.role==='admin'?'Directivo':'Funcionario',area:p.area||'',cargo:p.cargo||'',email:p.email}));
   WORKSPACES=wss.map(w=>({id:w.id,name:w.name,primary:w.is_primary,leader:w.leader_id,userIds:wms.filter(m=>m.workspace_id===w.id).map(m=>m.profile_id)}));
   PROJECTS=prs.map(p=>({id:p.id,title:p.title,ownerId:p.owner_id,estado:p.estado,prioridad:p.prioridad,inicio:p.inicio,fin:p.fin,presupuesto:p.presupuesto,color:p.color||'blue',etiquetas:p.etiquetas||[],desc:p.descripcion||'',workspaceId:p.workspace_id,usuarios:pms.filter(m=>m.project_id===p.id).map(m=>m.profile_id)}));
@@ -1571,7 +1562,6 @@ async function loadAll(){
   NOTES=nts.map(n=>({id:n.id,userId:n.owner_id,title:n.title,body:n.body,updated:n.updated_at}));
   TIMEBLOCKS=tbs.map(b=>({id:b.id,userId:b.owner_id,day:b.day,start:+b.start_h,end:+b.end_h,title:b.title,color:b.color}));
   ACTIVITY=acts.sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(a=>({who:a.actor_id,action:a.action,obj:a.object_text,ts:'',at:new Date(a.created_at).getTime()}));
-  PRIOLIST=pris.sort((a,b)=>(a.position-b.position)||((a.created_at||'').localeCompare(b.created_at||''))).map(x=>({id:x.id,text:x.text,done:x.done,doneAt:x.done_at,position:x.position,quadrant:x.quadrant||'hu'}));
 }
 async function dbAct(action,obj){ try{ await sb.from('activities').insert({actor_id:CURRENT.id, action, object_text:obj}); }catch(e){} }
 function dbErr(error,msg){ if(error){ confirmModal('No se pudo guardar', (msg||'Ocurrió un error')+': '+error.message, ()=>{}, 'Entendido'); return true; } return false; }
@@ -1584,6 +1574,7 @@ async function afterAuth(uid){
   const {data:prof}=await sb.from('profiles').select('*').eq('id',uid).single();
   if(!prof){return false;}
   CURRENT={id:prof.id,name:prof.name,email:prof.email,role:prof.role};
+  loadPrio();
   await loadAll();
   const myWs=WORKSPACES.filter(w=>CURRENT.role==='admin'||w.userIds.includes(CURRENT.id));
   CURRENT_WS=(myWs.find(w=>w.primary)||myWs[0]||{id:null}).id||CURRENT_WS;
