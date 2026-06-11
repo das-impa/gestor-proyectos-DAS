@@ -317,10 +317,10 @@ function gestionarIntegrantes(wid){
   document.getElementById('modalTitle').innerHTML='Integrantes · '+w.name;
   const form=document.getElementById('modalForm');
   form.innerHTML=`<p class="text-xs text-slate-500 mb-2">Selecciona quiénes forman parte del espacio.${w.leader?' Líder: <b class="text-slate-700">'+memberName(w.leader)+' 👑</b>':''}</p>
-    <div class="flex flex-wrap gap-1.5">${MEMBERS.map(m=>`<button type="button" data-u="${m.id}" class="wu rounded-lg border px-2.5 py-1.5 text-sm ${sel.users.includes(m.id)?'border-inst bg-inst text-white':'border-slate-200 text-slate-600'}">${m.name.split(' ')[0]}${m.id===w.leader?' 👑':''}</button>`).join('')}</div>
+    <div class="flex flex-wrap gap-1.5">${MEMBERS.map(m=>`<button type="button" data-u="${m.id}" class="wu rounded-lg border px-2.5 py-1.5 text-sm ${sel.users.includes(m.id)?'border-inst bg-inst text-white':'border-inst/40 bg-inst/5 text-inst font-medium'}">${m.name.split(' ')[0]}${m.id===w.leader?' 👑':''}</button>`).join('')}</div>
     <p class="text-[11px] text-slate-400 mt-2">El líder no se puede quitar. Los integrantes verán y trabajarán en este espacio.</p>
     <div class="flex justify-end gap-2 mt-5"><button type="button" onclick="closeModal()" class="rounded-lg border border-slate-200 text-slate-600 text-sm px-4 py-2 hover:bg-slate-50">Cancelar</button><button type="submit" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm font-medium px-4 py-2">Guardar integrantes</button></div>`;
-  form.querySelectorAll('.wu').forEach(b=>b.onclick=()=>{const u=b.dataset.u;if(u===w.leader)return;const i=sel.users.indexOf(u);if(i>=0)sel.users.splice(i,1);else sel.users.push(u);b.className=`wu rounded-lg border px-2.5 py-1.5 text-sm ${sel.users.includes(u)?'border-inst bg-inst text-white':'border-slate-200 text-slate-600'}`;});
+  form.querySelectorAll('.wu').forEach(b=>b.onclick=()=>{const u=b.dataset.u;if(u===w.leader)return;const i=sel.users.indexOf(u);if(i>=0)sel.users.splice(i,1);else sel.users.push(u);b.className=`wu rounded-lg border px-2.5 py-1.5 text-sm ${sel.users.includes(u)?'border-inst bg-inst text-white':'border-inst/40 bg-inst/5 text-inst font-medium'}`;});
   form.onsubmit=async e=>{e.preventDefault();const ids=[...new Set([w.leader,...sel.users].filter(Boolean))];closeModal();await sb.from('workspace_members').delete().eq('workspace_id',wid);await sb.from('workspace_members').insert(ids.map(u=>({workspace_id:wid,profile_id:u})));await loadAll();buildNav();renderEspacios();};
   document.getElementById('modalBackdrop').classList.remove('hidden');
 }
@@ -332,10 +332,10 @@ function nuevoEspacio(){
   form.innerHTML=`
     <div><div class="text-xs font-medium text-slate-500 mb-1">Nombre del espacio</div><input id="ws_name" required placeholder="Ej: Salud APS, Obras…" class="${ic}"/></div>
     <div class="mt-4"><div class="text-xs font-medium text-slate-500 mb-1">Integrantes del equipo <span class="text-slate-400">· serás el líder del espacio</span></div>
-      <div class="flex flex-wrap gap-1.5">${MEMBERS.map(m=>`<button type="button" data-u="${m.id}" class="wu rounded-lg border px-2.5 py-1.5 text-sm ${sel.users.includes(m.id)?'border-inst bg-inst text-white':'border-slate-200 text-slate-600'}">${m.name.split(' ')[0]}${m.id===CURRENT.id?' 👑':''}</button>`).join('')}</div>
+      <div class="flex flex-wrap gap-1.5">${MEMBERS.map(m=>`<button type="button" data-u="${m.id}" class="wu rounded-lg border px-2.5 py-1.5 text-sm ${sel.users.includes(m.id)?'border-inst bg-inst text-white':'border-inst/40 bg-inst/5 text-inst font-medium'}">${m.name.split(' ')[0]}${m.id===CURRENT.id?' 👑':''}</button>`).join('')}</div>
       <p class="text-[11px] text-slate-400 mt-1.5">Solo los integrantes seleccionados (y tú como líder) verán y trabajarán en este espacio.</p></div>
     <div class="flex justify-end gap-2 mt-5"><button type="button" onclick="closeModal()" class="rounded-lg border border-slate-200 text-slate-600 text-sm px-4 py-2 hover:bg-slate-50">Cancelar</button><button type="submit" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm font-medium px-4 py-2">Crear espacio</button></div>`;
-  form.querySelectorAll('.wu').forEach(b=>b.onclick=()=>{const u=b.dataset.u;if(u===CURRENT.id)return;const i=sel.users.indexOf(u);if(i>=0)sel.users.splice(i,1);else sel.users.push(u);b.className=`wu rounded-lg border px-2.5 py-1.5 text-sm ${sel.users.includes(u)?'border-inst bg-inst text-white':'border-slate-200 text-slate-600'}`;});
+  form.querySelectorAll('.wu').forEach(b=>b.onclick=()=>{const u=b.dataset.u;if(u===CURRENT.id)return;const i=sel.users.indexOf(u);if(i>=0)sel.users.splice(i,1);else sel.users.push(u);b.className=`wu rounded-lg border px-2.5 py-1.5 text-sm ${sel.users.includes(u)?'border-inst bg-inst text-white':'border-inst/40 bg-inst/5 text-inst font-medium'}`;});
   form.onsubmit=async e=>{e.preventDefault();const n=document.getElementById('ws_name').value.trim();if(!n){document.getElementById('ws_name').focus();return;}closeModal();const {data:nw,error}=await sb.from('workspaces').insert({name:n,is_primary:false,leader_id:CURRENT.id}).select().single();if(dbErr(error,'No se pudo crear el espacio'))return;const ids=[...new Set([CURRENT.id,...sel.users])];await sb.from('workspace_members').insert(ids.map(u=>({workspace_id:nw.id,profile_id:u})));await dbAct('creó el espacio de trabajo',n);await loadAll();buildNav();renderEspacios();};
   document.getElementById('modalBackdrop').classList.remove('hidden');
   setTimeout(()=>document.getElementById('ws_name').focus(),40);
@@ -814,7 +814,7 @@ function editarResponsables(pid){const p=PROJECTS.find(x=>x.id===pid);if(!p||!ca
   const sel={users:[...projResp(p)]};
   document.getElementById('modalTitle').innerHTML='Responsables del proyecto';
   const form=document.getElementById('modalForm');
-  const paint=u=>`ru rounded-lg border px-2.5 py-1.5 text-sm ${sel.users.includes(u)?'border-inst bg-inst text-white':'border-slate-200 text-slate-600'}`;
+  const paint=u=>`ru rounded-lg border px-2.5 py-1.5 text-sm ${sel.users.includes(u)?'border-inst bg-inst text-white':'border-inst/40 bg-inst/5 text-inst font-medium'}`;
   const funcs=MEMBERS.filter(m=>m.role!=='Directivo');
   form.innerHTML=`<p class="text-xs text-slate-500 mb-2">Selecciona los <b>funcionarios responsables</b> de «${p.title}» (uno o más). El supervisor es <b>${memberName(projSupervisor(p))}</b>.</p>
     <div class="flex flex-wrap gap-1.5">${funcs.map(m=>`<button type="button" data-u="${m.id}" class="${paint(m.id)}">${m.name.split(' ')[0]}</button>`).join('')||'<span class="text-xs text-slate-400">No hay funcionarios aún. Créalos en Usuarios.</span>'}</div>
@@ -1278,7 +1278,7 @@ function openRichForm(opts){
     </div>`}
     <button type="submit" class="mt-5 w-full rounded-xl ${isInstr?'bg-orange-500 hover:bg-orange-600':'bg-inst hover:bg-inst-dark'} text-white font-bold py-3">${isInstr?'⚡ Enviar instrucción':'✅ Crear tarea'}</button>`;
   const paintUrg=()=>form.querySelectorAll('.urg').forEach(x=>{const c=x.dataset.c,on=x.dataset.u===st.urg;x.className=`urg rounded-lg border px-3 py-2 text-sm ${on?`border-${c}-400 bg-${c}-50 text-${c}-700 font-semibold`:'border-slate-200 text-slate-500'}`;});
-  const paintPz=()=>form.querySelectorAll('.pz').forEach(x=>{const on=x.dataset.p===st.plazo;x.className=`pz rounded-lg border px-3 py-1.5 text-sm ${on?'border-inst bg-inst text-white':'border-slate-200 text-slate-600'}`;});
+  const paintPz=()=>form.querySelectorAll('.pz').forEach(x=>{const on=x.dataset.p===st.plazo;x.className=`pz rounded-lg border px-3 py-1.5 text-sm ${on?'border-inst bg-inst text-white':'border-inst/40 bg-inst/5 text-inst font-medium'}`;});
   paintUrg(); paintPz();
   form.querySelectorAll('.urg').forEach(b=>b.onclick=()=>{st.urg=b.dataset.u;paintUrg();});
   form.querySelectorAll('.pz').forEach(b=>b.onclick=()=>{st.plazo=b.dataset.p;document.getElementById('rf_fecha').value='';paintPz();});
@@ -1328,7 +1328,7 @@ function openProjectForm(){
       <div>${lbl('Termina el')}<input id="pf_fin" type="date" class="${ic}"/></div>
     </div>
     <div class="mt-3">${lbl('Accesibilidad del proyecto')}<select id="pf_acc" class="${ic}"><option>Usuarios asignados</option><option>Todos los usuarios</option><option>Solo yo</option></select></div>
-    <div class="mt-3">${lbl('Responsables (funcionarios) <span class=text-slate-400>· tú quedas como supervisor</span>')}<div class="flex flex-wrap gap-1.5">${MEMBERS.filter(m=>m.role!=='Directivo').map(m=>`<button type="button" data-u="${m.id}" class="usr rounded-lg border px-2.5 py-1.5 text-sm ${sel.usuarios.includes(m.id)?'border-inst bg-inst text-white':'border-slate-200 text-slate-600'}">${m.name.split(' ')[0]}</button>`).join('')||'<span class="text-xs text-slate-400">No hay funcionarios aún. Créalos en Usuarios.</span>'}</div></div>
+    <div class="mt-3">${lbl('Responsables (funcionarios) <span class=text-slate-400>· tú quedas como supervisor</span>')}<div class="flex flex-wrap gap-1.5">${MEMBERS.filter(m=>m.role!=='Directivo').map(m=>`<button type="button" data-u="${m.id}" class="usr rounded-lg border px-2.5 py-1.5 text-sm ${sel.usuarios.includes(m.id)?'border-inst bg-inst text-white':'border-inst/40 bg-inst/5 text-inst font-medium'}">${m.name.split(' ')[0]}</button>`).join('')||'<span class="text-xs text-slate-400">No hay funcionarios aún. Créalos en Usuarios.</span>'}</div></div>
     <div class="mt-3">${lbl('Seleccionar etiquetas')}<div class="flex flex-wrap gap-1.5">${ETI.map(e=>`<button type="button" data-e="${e}" class="eti2 rounded-lg border px-2.5 py-1.5 text-sm border-${labelColor(e)}-300 text-${labelColor(e)}-700">${e}</button>`).join('')}</div></div>
     <div class="mt-3">${lbl('Descripción')}<div class="rounded-lg border border-slate-200 overflow-hidden">
       <div class="flex items-center gap-2.5 px-3 py-1.5 border-b border-slate-100 text-slate-400 text-sm bg-slate-50">🔗 <span class="text-slate-300">|</span> <b class="text-slate-500">B</b> <i class="text-slate-500">I</i> <span class="text-slate-300">|</span> ☰</div>
@@ -1336,7 +1336,7 @@ function openProjectForm(){
     <div class="flex justify-end gap-2 mt-5">
       <button type="button" onclick="closeModal()" class="rounded-lg border border-slate-200 text-slate-600 text-sm px-4 py-2 hover:bg-slate-50">Cancelar</button>
       <button type="submit" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm font-semibold px-4 py-2">Crear proyecto</button></div>`;
-  form.querySelectorAll('.usr').forEach(b=>b.onclick=()=>{const u=b.dataset.u,i=sel.usuarios.indexOf(u);if(i>=0){if(sel.usuarios.length>1)sel.usuarios.splice(i,1);}else sel.usuarios.push(u);b.className=`usr rounded-lg border px-2.5 py-1.5 text-sm ${sel.usuarios.includes(u)?'border-inst bg-inst text-white':'border-slate-200 text-slate-600'}`;});
+  form.querySelectorAll('.usr').forEach(b=>b.onclick=()=>{const u=b.dataset.u,i=sel.usuarios.indexOf(u);if(i>=0){if(sel.usuarios.length>1)sel.usuarios.splice(i,1);}else sel.usuarios.push(u);b.className=`usr rounded-lg border px-2.5 py-1.5 text-sm ${sel.usuarios.includes(u)?'border-inst bg-inst text-white':'border-inst/40 bg-inst/5 text-inst font-medium'}`;});
   form.querySelectorAll('.eti2').forEach(b=>b.onclick=()=>{const e=b.dataset.e,lc=labelColor(e),i=sel.etiquetas.indexOf(e);if(i>=0){sel.etiquetas.splice(i,1);b.className=`eti2 rounded-lg border px-2.5 py-1.5 text-sm border-${lc}-300 text-${lc}-700`;}else{sel.etiquetas.push(e);b.className=`eti2 rounded-lg border px-2.5 py-1.5 text-sm border-${lc}-500 bg-${lc}-500 text-white`;}});
   form.onsubmit=async e=>{e.preventDefault();const title=document.getElementById('pf_title').value.trim();if(!title){document.getElementById('pf_title').focus();return;}
     const cols=['emerald','blue','amber','rose','violet'];closeModal();
