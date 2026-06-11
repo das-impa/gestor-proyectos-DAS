@@ -556,7 +556,24 @@ function renderPrioridades(){REDRAW=renderPrioridades;
   const stat=(l,v,c,ic)=>`<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div class="flex items-center justify-between"><span class="text-xs text-slate-500">${l}</span><span class="text-slate-300">${ic}</span></div><div class="text-2xl font-bold text-${c}-600 tabular-nums mt-1">${v}</div></div>`;
   main.innerHTML=`<div class="p-6 max-w-6xl mx-auto">
     <h1 class="text-xl font-bold text-slate-900 mb-1">🔥 Prioridades</h1>
-    <p class="text-sm text-slate-500 mb-5">Matriz urgente / importante · ${CURRENT.role==='admin'?'todo el espacio':'tus tareas e instrucciones'} · ${wsName(CURRENT_WS)}</p>
+    <p class="text-sm text-slate-500 mb-3">Matriz urgente / importante · ${CURRENT.role==='admin'?'todo el espacio':'tus tareas e instrucciones'} · ${wsName(CURRENT_WS)}</p>
+    <details class="mb-5 rounded-xl border border-inst/30 bg-white shadow-sm">
+      <summary class="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-inst flex items-center gap-2">📐 ¿Cómo usar la matriz? Ver ejemplo</summary>
+      <div class="px-4 pb-4">
+        <div class="grid grid-cols-[auto_1fr_1fr] gap-2">
+          <div></div>
+          <div class="text-center text-[11px] font-bold text-inst uppercase tracking-wide pb-1">Urgente</div>
+          <div class="text-center text-[11px] font-bold text-slate-400 uppercase tracking-wide pb-1">No urgente</div>
+          <div class="grid place-items-center"><span class="text-[10px] font-bold text-inst uppercase [writing-mode:vertical-rl] rotate-180">Importante</span></div>
+          <div class="rounded-lg border-2 border-rose-300 p-3"><div class="font-bold text-rose-600 text-sm">🔴 Hacer ahora</div><div class="text-[11px] text-slate-500 mt-1">Tareas con plazo o consecuencias. <b>Atiéndelas primero.</b></div></div>
+          <div class="rounded-lg border-2 border-blue-300 p-3"><div class="font-bold text-blue-600 text-sm">🔵 Planificar</div><div class="text-[11px] text-slate-500 mt-1">Importantes sin plazo inmediato. <b>Prográmalas</b> (aportan a largo plazo).</div></div>
+          <div class="grid place-items-center"><span class="text-[10px] font-bold text-slate-400 uppercase [writing-mode:vertical-rl] rotate-180">No importante</span></div>
+          <div class="rounded-lg border-2 border-amber-300 p-3"><div class="font-bold text-amber-600 text-sm">🟡 Atender pronto</div><div class="text-[11px] text-slate-500 mt-1">Urgentes pero de menor prioridad. <b>Resuélvelas rápido o delega.</b></div></div>
+          <div class="rounded-lg border-2 border-slate-300 p-3"><div class="font-bold text-slate-600 text-sm">⚪ Cuando se pueda</div><div class="text-[11px] text-slate-500 mt-1">Ni urgente ni prioritario. <b>Hazlas si sobra tiempo o descártalas.</b></div></div>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-3">Cada tarea se ubica según su <b>prioridad</b> (importante = Alta) y su <b>plazo</b> (urgente = vence en ≤3 días o ya venció). Los colores coinciden con los de tu matriz de abajo.</p>
+      </div>
+    </details>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
       ${stat('Prioridades activas',total,'slate','📌')}${stat('Hacer ahora',q.hu.length,'rose','🔥')}${stat('Vencidas',venc,'rose','⚠')}${stat('Vencen hoy',hoy,'amber','🕒')}
     </div>
