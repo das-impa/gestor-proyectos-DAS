@@ -546,11 +546,23 @@ function renderPrioridades(){REDRAW=renderPrioridades;
       <span class="text-slate-500">👤 ${memberName(t.who).split(' ')[0]}</span>
       ${t.vence?`<span class="${isVencida(t)?'text-rose-600 font-semibold':'text-slate-400'}">📅 ${fdate(t.vence)}${isVencida(t)?' · vencida':''}</span>`:''}
     </div></div>`;};
-  const quad=(title,sub,color,list)=>`<div class="rounded-xl border-2 border-${color}-300 bg-white p-3 shadow-sm">
-    <div class="flex items-center justify-between mb-2"><div><div class="font-bold text-${color}-600 text-sm">${title}</div><div class="text-[11px] text-slate-500">${sub}</div></div><span class="text-xs font-bold text-${color}-700 bg-${color}-100 rounded-full px-2 py-0.5">${list.length}</span></div>
-    <div class="space-y-2 max-h-80 overflow-y-auto pr-1">${list.length?list.map(card).join(''):'<div class="text-xs text-slate-400 py-4 text-center">Sin tareas aquí.</div>'}</div></div>`;
-  const venc=tasks.filter(isVencida).length, hoy=tasks.filter(t=>t.vence===HOY).length, prox=tasks.filter(t=>t.vence&&t.vence>HOY&&t.vence<=limU).length, sinF=tasks.filter(t=>!t.vence).length, total=tasks.length;
-  const di=[{l:'🔴 Hacer ahora',v:q.hu.length,col:'#f43f5e'},{l:'🔵 Planificar',v:q.hn.length,col:'#3b82f6'},{l:'🟡 Atender pronto',v:q.uu.length,col:'#f59e0b'},{l:'⚪ Cuando se pueda',v:q.nn.length,col:'#94a3b8'}];
+  const pq=k=>PRIOLIST.filter(it=>it.quadrant===k);
+  const quad=(key,title,sub,color,list)=>{const mine=pq(key);return `<div class="rounded-xl border-2 border-${color}-300 bg-white p-3 shadow-sm flex flex-col">
+    <div class="flex items-center justify-between mb-2"><div><div class="font-bold text-${color}-600 text-sm">${title}</div><div class="text-[11px] text-slate-500">${sub}</div></div><span class="text-xs font-bold text-${color}-700 bg-${color}-100 rounded-full px-2 py-0.5">${mine.length+list.length}</span></div>
+    <div class="space-y-1.5 max-h-72 overflow-y-auto pr-1 mb-2 flex-1">
+      ${mine.map(it=>`<div class="flex items-center gap-2 group">
+        <input type="checkbox" ${it.done?'checked':''} onchange="togglePrioItem('${it.id}',this.checked)" class="accent-[#1e3a8a] w-4 h-4 shrink-0 cursor-pointer"/>
+        <input value="${escP(it.text)}" onchange="editPrioItem('${it.id}',this.value)" placeholder="(vacío para eliminar)" class="flex-1 min-w-0 bg-transparent outline-none border-b border-transparent focus:border-slate-200 text-sm ${it.done?'line-through text-slate-400':'text-slate-700'}"/>
+        <button onclick="delPrioItem('${it.id}')" title="Eliminar" class="text-slate-300 hover:text-rose-500 text-base shrink-0 opacity-60 group-hover:opacity-100">×</button></div>`).join('')}
+      ${list.length?`<div class="text-[10px] text-slate-400 uppercase tracking-wide pt-1">Tareas que caen aquí</div>${list.map(card).join('')}`:''}
+      ${(!mine.length&&!list.length)?'<div class="text-xs text-slate-400 py-3 text-center">Vacío. Escribe abajo para agregar tu prioridad.</div>':''}
+    </div>
+    <div class="flex gap-1.5">
+      <input id="prio_in_${key}" placeholder="+ Escribe una prioridad…" onkeydown="if(event.key==='Enter')addPrioItem('${key}')" class="flex-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs outline-none focus:border-${color}-400"/>
+      <button onclick="addPrioItem('${key}')" class="rounded-lg bg-${color}-500 hover:opacity-90 text-white text-sm px-3 font-bold">+</button>
+    </div></div>`;};
+  const venc=tasks.filter(isVencida).length, hoy=tasks.filter(t=>t.vence===HOY).length, prox=tasks.filter(t=>t.vence&&t.vence>HOY&&t.vence<=limU).length, sinF=tasks.filter(t=>!t.vence).length, total=tasks.length+PRIOLIST.filter(x=>!x.done).length;
+  const di=[{l:'🔴 Hacer ahora',v:q.hu.length+pq('hu').length,col:'#f43f5e'},{l:'🔵 Planificar',v:q.hn.length+pq('hn').length,col:'#3b82f6'},{l:'🟡 Atender pronto',v:q.uu.length+pq('uu').length,col:'#f59e0b'},{l:'⚪ Cuando se pueda',v:q.nn.length+pq('nn').length,col:'#94a3b8'}];
   const urg=[['Vencidas',venc,'#f43f5e'],['Vencen hoy',hoy,'#f59e0b'],['Próx. 3 días',prox,'#3b82f6'],['Sin fecha',sinF,'#94a3b8']];
   const maxU=Math.max(1,venc,hoy,prox,sinF);
   const stat=(l,v,c,ic)=>`<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div class="flex items-center justify-between"><span class="text-xs text-slate-500">${l}</span><span class="text-slate-300">${ic}</span></div><div class="text-2xl font-bold text-${c}-600 tabular-nums mt-1">${v}</div></div>`;
@@ -574,24 +586,8 @@ function renderPrioridades(){REDRAW=renderPrioridades;
         <p class="text-[11px] text-slate-400 mt-3">Cada tarea se ubica según su <b>prioridad</b> (importante = Alta) y su <b>plazo</b> (urgente = vence en ≤3 días o ya venció). Los colores coinciden con los de tu matriz de abajo.</p>
       </div>
     </details>
-    <div class="rounded-xl border-2 border-inst/30 bg-white p-4 shadow-sm mb-5">
-      <div class="flex items-start justify-between gap-2 mb-0.5">
-        <h3 class="text-sm font-bold text-slate-700">📝 Mis prioridades del día <span class="font-normal text-slate-400 text-xs">· lista personal · independiente de las tareas</span></h3>
-        ${PRIOLIST.some(x=>x.done)?`<button onclick="limpiarPrioridades()" class="shrink-0 text-xs rounded-lg border border-slate-200 text-slate-500 hover:border-rose-300 hover:text-rose-600 px-2.5 py-1">🧹 Limpiar completadas (${PRIOLIST.filter(x=>x.done).length})</button>`:''}
-      </div>
-      <p class="text-[11px] text-slate-400 mb-3">Escríbelas, márcalas al terminar, edítalas (clic en el texto) o elimínalas.</p>
-      <div class="flex gap-2 mb-3">
-        <input id="prio_in" placeholder="Escribe una prioridad y pulsa Agregar…" onkeydown="if(event.key==='Enter')addPrioItem()" class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-inst"/>
-        <button onclick="addPrioItem()" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm px-4 font-medium">Agregar</button></div>
-      <div class="space-y-1.5">${PRIOLIST.length?PRIOLIST.map(it=>`<div class="flex items-center gap-2 group">
-        <input type="checkbox" ${it.done?'checked':''} onchange="togglePrioItem('${it.id}',this.checked)" class="accent-[#1e3a8a] w-4 h-4 shrink-0 cursor-pointer"/>
-        <input value="${escP(it.text)}" onchange="editPrioItem('${it.id}',this.value)" placeholder="(vacío para eliminar)" class="flex-1 min-w-0 bg-transparent outline-none border-b border-transparent focus:border-slate-200 text-sm ${it.done?'line-through text-slate-400':'text-slate-700'}"/>
-        ${it.done&&it.doneAt?`<span class="text-[10px] text-emerald-600 shrink-0">✓ ${fdate(String(it.doneAt).slice(0,10))}</span>`:''}
-        <button onclick="delPrioItem('${it.id}')" title="Eliminar" class="text-slate-300 hover:text-rose-500 text-base shrink-0 opacity-60 group-hover:opacity-100">×</button>
-      </div>`).join(''):'<div class="text-xs text-slate-400">Aún no hay prioridades. Escribe arriba y pulsa Agregar.</div>'}</div>
-    </div>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-      ${stat('Prioridades activas',total,'slate','📌')}${stat('Hacer ahora',q.hu.length,'rose','🔥')}${stat('Vencidas',venc,'rose','⚠')}${stat('Vencen hoy',hoy,'amber','🕒')}
+      ${stat('Prioridades activas',total,'slate','📌')}${stat('Hacer ahora',q.hu.length+pq('hu').length,'rose','🔥')}${stat('Vencidas',venc,'rose','⚠')}${stat('Vencen hoy',hoy,'amber','🕒')}
     </div>
     <div class="grid md:grid-cols-2 gap-4 mb-5">
       <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -605,19 +601,23 @@ function renderPrioridades(){REDRAW=renderPrioridades;
         ${urg.map(([l,v,c])=>`<div class="flex items-center gap-2 mb-2.5"><span class="w-20 text-xs text-slate-600">${l}</span><div class="flex-1 h-4 bg-slate-100 rounded overflow-hidden"><div class="h-full rounded" style="width:${Math.round(v/maxU*100)}%;background:${c}"></div></div><span class="w-6 text-right text-xs tabular-nums text-slate-500">${v}</span></div>`).join('')}
       </div>
     </div>
-    <div class="grid md:grid-cols-2 gap-4">
-      ${quad('🔴 Hacer ahora','Importante y urgente','rose',q.hu)}
-      ${quad('🔵 Planificar','Importante, sin apuro','blue',q.hn)}
-      ${quad('🟡 Atender pronto','Urgente, prioridad media/baja','amber',q.uu)}
-      ${quad('⚪ Cuando se pueda','Ni urgente ni prioritario','slate',q.nn)}
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="text-sm font-bold text-slate-700">📌 Mi matriz de prioridades <span class="font-normal text-slate-400 text-xs">· escribe en cada cuadrante · independiente de las tareas</span></h3>
+      ${PRIOLIST.some(x=>x.done)?`<button onclick="limpiarPrioridades()" class="shrink-0 text-xs rounded-lg border border-slate-200 text-slate-500 hover:border-rose-300 hover:text-rose-600 px-2.5 py-1">🧹 Limpiar completadas (${PRIOLIST.filter(x=>x.done).length})</button>`:''}
     </div>
-    <div class="text-[11px] text-slate-400 mt-3">Importante = prioridad <b>Alta</b> · Urgente = vencida o vence en ≤3 días · Las completadas no aparecen. Haz clic en una tarea para abrirla.</div>
+    <div class="grid md:grid-cols-2 gap-4 items-stretch">
+      ${quad('hu','🔴 Hacer ahora','Importante y urgente','rose',q.hu)}
+      ${quad('hn','🔵 Planificar','Importante, sin apuro','blue',q.hn)}
+      ${quad('uu','🟡 Atender pronto','Urgente, prioridad media/baja','amber',q.uu)}
+      ${quad('nn','⚪ Cuando se pueda','Ni urgente ni prioritario','slate',q.nn)}
+    </div>
+    <div class="text-[11px] text-slate-400 mt-3">Escribe tus prioridades en cualquier cuadrante (independientes de las tareas). Las <b>tareas</b> del sistema se ubican solas según prioridad (Alta) y plazo (≤3 días).</div>
   </div>`;
 }
-async function addPrioItem(){const i=document.getElementById('prio_in');const t=(i.value||'').trim();if(!t)return;
-  const {error}=await sb.from('priority_items').insert({owner_id:CURRENT.id,text:t,position:PRIOLIST.length});
-  if(dbErr(error,'No se pudo agregar a la lista'))return;
-  await loadAll(); renderPrioridades(); const ni=document.getElementById('prio_in'); if(ni)ni.focus();}
+async function addPrioItem(key){const i=document.getElementById('prio_in_'+key);const t=(i&&i.value||'').trim();if(!t)return;
+  const {error}=await sb.from('priority_items').insert({owner_id:CURRENT.id,text:t,quadrant:key,position:PRIOLIST.length});
+  if(dbErr(error,'No se pudo agregar la prioridad'))return;
+  await loadAll(); renderPrioridades(); const ni=document.getElementById('prio_in_'+key); if(ni)ni.focus();}
 async function togglePrioItem(id,done){
   const {error}=await sb.from('priority_items').update({done,done_at:done?new Date().toISOString():null}).eq('id',id);
   if(error){await loadAll();renderPrioridades();return;}
@@ -1571,7 +1571,7 @@ async function loadAll(){
   NOTES=nts.map(n=>({id:n.id,userId:n.owner_id,title:n.title,body:n.body,updated:n.updated_at}));
   TIMEBLOCKS=tbs.map(b=>({id:b.id,userId:b.owner_id,day:b.day,start:+b.start_h,end:+b.end_h,title:b.title,color:b.color}));
   ACTIVITY=acts.sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'')).map(a=>({who:a.actor_id,action:a.action,obj:a.object_text,ts:'',at:new Date(a.created_at).getTime()}));
-  PRIOLIST=pris.sort((a,b)=>(a.position-b.position)||((a.created_at||'').localeCompare(b.created_at||''))).map(x=>({id:x.id,text:x.text,done:x.done,doneAt:x.done_at,position:x.position}));
+  PRIOLIST=pris.sort((a,b)=>(a.position-b.position)||((a.created_at||'').localeCompare(b.created_at||''))).map(x=>({id:x.id,text:x.text,done:x.done,doneAt:x.done_at,position:x.position,quadrant:x.quadrant||'hu'}));
 }
 async function dbAct(action,obj){ try{ await sb.from('activities').insert({actor_id:CURRENT.id, action, object_text:obj}); }catch(e){} }
 function dbErr(error,msg){ if(error){ confirmModal('No se pudo guardar', (msg||'Ocurrió un error')+': '+error.message, ()=>{}, 'Entendido'); return true; } return false; }

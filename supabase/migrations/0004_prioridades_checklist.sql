@@ -10,9 +10,12 @@ create table if not exists priority_items (
   text       text not null default '',
   done       boolean not null default false,
   done_at    timestamptz,
+  quadrant   text not null default 'hu',   -- cuadrante Eisenhower: hu/hn/uu/nn
   position   int not null default 0,
   created_at timestamptz not null default now()
 );
+-- Si la tabla ya existía (migración 0004 previa sin la columna):
+alter table priority_items add column if not exists quadrant text not null default 'hu';
 
 alter table priority_items enable row level security;
 
