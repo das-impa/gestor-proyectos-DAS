@@ -338,8 +338,13 @@ function previewEspacio(wid){
   document.getElementById('espPreview')?.remove();
   const ps=PROJECTS.filter(p=>(p.workspaceId||'ws1')===wid);
   const estChip=e=>{const c={'En curso':'emerald','Pendiente':'amber','Completado':'blue','Pausado':'slate','Atrasado':'rose'}[e]||'slate';return `<span class="text-[10px] px-1.5 py-0.5 rounded bg-${c}-100 text-${c}-700">${escP(e||'')}</span>`;};
-  const list = ps.length ? ps.map(p=>`<div class="flex items-center gap-2 px-3 py-2 border-b border-slate-100 last:border-0">
-      <span>📁</span><span class="text-sm text-slate-700 flex-1 truncate" title="${escP(p.title||p.name||'')}">${escP(p.title||p.name||'')}</span>${estChip(p.estado)}</div>`).join('')
+  const list = ps.length ? ps.map(p=>{
+      const ts=tasksOfProject(p.id);const dn=ts.filter(t=>t.estado==='Completada').length;const pct=ts.length?Math.round(dn/ts.length*100):0;
+      const bc=pct>=100?'emerald':pct>=50?'blue':pct>0?'amber':'slate';
+      return `<div class="px-3 py-2 border-b border-slate-100 last:border-0">
+      <div class="flex items-center gap-2"><span>📁</span><span class="text-sm text-slate-700 flex-1 truncate" title="${escP(p.title||p.name||'')}">${escP(p.title||p.name||'')}</span>${estChip(p.estado)}</div>
+      <div class="flex items-center gap-2 mt-1.5 pl-6"><div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-${bc}-500" style="width:${pct}%"></div></div><span class="text-[10px] text-slate-500 w-9 text-right tabular-nums font-medium">${pct}%</span></div>
+    </div>`;}).join('')
     : '<div class="text-sm text-slate-400 px-3 py-8 text-center">Este espacio aún no tiene proyectos.</div>';
   const el=document.createElement('div');
   el.id='espPreview';
