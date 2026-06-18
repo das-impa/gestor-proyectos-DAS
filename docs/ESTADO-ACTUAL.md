@@ -21,7 +21,8 @@ App de gestión de proyectos/tareas/prioridades para la **Ilustre Municipalidad 
 - **Admin maestro:** creado en Authentication. Rol admin.
 - **SQL ejecutado:** `0003_app_model.sql`, `seed-piloto.sql`, `0004_prioridades_checklist.sql` (tabla `priority_items` con RLS: dueño edita, **admin lee todas**).
 - ✅ `0005_notificaciones_extensiones.sql` ejecutado (tablas `notifications` + `deadline_extensions`).
-- ⚠️ **PENDIENTE de ejecutar:** `0006_extension_comentario.sql` (1 línea: agrega `response_comment` a `deadline_extensions`). Sin esto, el comentario del supervisor al aceptar/denegar no se guarda.
+- ⚠️ **PENDIENTE de ejecutar (SQL):** `0006_extension_comentario.sql` (`response_comment`) · `0007_display_name.sql` (`profiles.display_name`).
+- ⚠️ **PENDIENTE de desplegar (Edge Function):** `recuperar-clave` (resetea contraseña a `123456` desde el login; service_role; sin auth del llamador).
 - **Edge Functions desplegadas (por el usuario, vía dashboard):** `crear-usuario` y `editar-usuario` (usan service_role; validan que el llamador sea admin).
 - ⚠️ `service_role` NUNCA en el cliente. Sin secretos reales en el repo.
 
@@ -52,6 +53,9 @@ profiles, workspaces, workspace_members, projects, project_members, tasks, subta
    - **Sección "📅 Solicitudes de plazo"** (`renderExtensiones`, en el nav para todos): detalle de cada solicitud (motivo, fechas, estado, historial). El supervisor acepta/deniega con **comentario opcional** (`openResolveExtension` → modal → `resolveExtension`); el comentario va en la notificación y el correo. Botón "🔍 Ver detalle" desde la campana.
    - *(Opcional futuro)* envío 24/7 garantizado de los recordatorios: requiere agendador (Supabase pg_cron + un proveedor de correo server-side).
 3. **Permisos/validaciones:** el **funcionario NO puede eliminar** tareas, instrucciones ni proyectos (solo admin/jefatura); botones ocultos + guardas en `delTask`/`delProject`. No se permite asignar tareas/instrucciones con **fecha de vencimiento anterior a hoy** (atributo `min`=HOY + validación al enviar).
+4. **Recuperación de contraseña:** enlace "¿Olvidaste tu contraseña?" en el login → Edge Function `recuperar-clave` resetea a **123456** + correo (EmailJS) avisando que la cambie. ⚠️ Cualquiera que sepa un correo puede resetearlo a 123456 (mitigación: el correo pide cambiarla; alternativa más segura = enlace de Supabase). `recuperarClave()` en el cliente.
+5. **Nombre de pila vs oficial:** `profiles.display_name` (personal, solo afecta el chip de cabecera del propio usuario, editable en su Perfil); el **nombre oficial** (`profiles.name`) lo asigna/edita solo el admin en Usuarios. `memberName` y reportes usan SIEMPRE el oficial.
+6. **Rendimiento › Gráficos:** las barras muestran **nombre y apellido** (`dosNombres`/`memberNA`) para distinguir homónimos.
 2. (Opcional) Google Calendar **sincronización OAuth completa** (auto-push/2-vías): requiere Google Cloud + OAuth + verificación → más adelante; hoy resuelto con el enlace universal.
 3. (Opcional) Dominio propio gratis para GitHub Pages; Supabase Pro (~US$25/mes) por respaldos; a futuro reescritura a Next.js.
 
