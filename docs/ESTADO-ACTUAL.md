@@ -20,7 +20,8 @@ App de gestión de proyectos/tareas/prioridades para la **Ilustre Municipalidad 
 - Proyecto **DAS-CONTROL-GESTION** · URL `https://kianrcgzpnzfmeklmjww.supabase.co` · clave pública `sb_publishable_l6vqjgK-4fDKo1MkpcBOZg_r_U7pz8v` (va en index.html, **pública por diseño**).
 - **Admin maestro:** creado en Authentication. Rol admin.
 - **SQL ejecutado:** `0003_app_model.sql`, `seed-piloto.sql`, `0004_prioridades_checklist.sql` (tabla `priority_items` con RLS: dueño edita, **admin lee todas**).
-- ⚠️ **PENDIENTE de ejecutar:** `0005_notificaciones_extensiones.sql` (tablas `notifications` + `deadline_extensions` con RLS). Sin esto, las alertas de vencimiento y el flujo de extensión de plazo NO funcionan.
+- ✅ `0005_notificaciones_extensiones.sql` ejecutado (tablas `notifications` + `deadline_extensions`).
+- ⚠️ **PENDIENTE de ejecutar:** `0006_extension_comentario.sql` (1 línea: agrega `response_comment` a `deadline_extensions`). Sin esto, el comentario del supervisor al aceptar/denegar no se guarda.
 - **Edge Functions desplegadas (por el usuario, vía dashboard):** `crear-usuario` y `editar-usuario` (usan service_role; validan que el llamador sea admin).
 - ⚠️ `service_role` NUNCA en el cliente. Sin secretos reales en el repo.
 
@@ -48,7 +49,9 @@ profiles, workspaces, workspace_members, projects, project_members, tasks, subta
 2. ✅ **Alertas de vencimiento + extensión de plazo — LISTO (código).** Requiere correr `0005_notificaciones_extensiones.sql`.
    - **Por vencer (1 semana / 3 días / 1 día) y vencido:** notificación interna (campana 🔔, tabla `notifications`) + correo, para tareas, instrucciones y proyectos. Se generan al cargar la app (`checkDeadlines()` en `afterAuth`); deduplican por `dedupe_key`; el correo se envía solo la 1ª vez. ⚠️ Por ser EmailJS (cliente), el correo sale cuando alguien (el asignado o un admin) **abre la app** y la alerta es nueva — no hay agendador 24/7.
    - **Extensión de plazo:** desde la alerta, el funcionario pulsa "📅 Solicitar extensión" (fecha + motivo) → se notifica al supervisor/asignador (campana + correo). El supervisor pulsa **Aceptar/Denegar** en su campana; al aceptar, el plazo (`tasks.vence` o `projects.fin`) **se actualiza solo** y se avisa al funcionario. Tabla `deadline_extensions`. Aprobador = dueño del proyecto, o el directivo que asignó, o el primer directivo (`approverForTask`).
+   - **Sección "📅 Solicitudes de plazo"** (`renderExtensiones`, en el nav para todos): detalle de cada solicitud (motivo, fechas, estado, historial). El supervisor acepta/deniega con **comentario opcional** (`openResolveExtension` → modal → `resolveExtension`); el comentario va en la notificación y el correo. Botón "🔍 Ver detalle" desde la campana.
    - *(Opcional futuro)* envío 24/7 garantizado de los recordatorios: requiere agendador (Supabase pg_cron + un proveedor de correo server-side).
+3. **Permisos/validaciones:** el **funcionario NO puede eliminar** tareas, instrucciones ni proyectos (solo admin/jefatura); botones ocultos + guardas en `delTask`/`delProject`. No se permite asignar tareas/instrucciones con **fecha de vencimiento anterior a hoy** (atributo `min`=HOY + validación al enviar).
 2. (Opcional) Google Calendar **sincronización OAuth completa** (auto-push/2-vías): requiere Google Cloud + OAuth + verificación → más adelante; hoy resuelto con el enlace universal.
 3. (Opcional) Dominio propio gratis para GitHub Pages; Supabase Pro (~US$25/mes) por respaldos; a futuro reescritura a Next.js.
 
