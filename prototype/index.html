@@ -1556,6 +1556,10 @@ function nuevoUsuario(){
     const err=(error&&error.message)||(data&&data.error);
     if(err){confirmModal('No se pudo crear el usuario',err,()=>{},'Entendido');return;}
     await dbAct('creó al usuario',d.name);
+    const correo=(d.email||'').trim().toLowerCase();
+    if(correo){
+      enviarCorreo(correo,d.name,'🔑 Acceso a DAS Control de Gestión Sanitaria','Hola '+(d.name||'').split(' ')[0]+',\n\nSe ha creado tu cuenta en el sistema DAS Control de Gestión Sanitaria de la Ilustre Municipalidad de Pozo Almonte.\n\nEstas son tus credenciales de acceso:\n\n👤 Usuario (correo): '+correo+'\n🔑 Contraseña inicial: '+d.pass+'\n\n🔗 Ingresa aquí:\nhttps://fabriciocespedes-bit.github.io/gestor-proyectos-DAS/\n\nPor seguridad, te recomendamos cambiar tu contraseña al ingresar por primera vez.\n\n— DAS Control de Gestión Sanitaria\n\n⚠️ Este es un correo automático del sistema. Por favor no responder a esta dirección.');
+    }
     await loadAll(); renderUsers();
   },'Crear usuario');
 }
