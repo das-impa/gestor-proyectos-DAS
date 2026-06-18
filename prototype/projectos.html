@@ -617,44 +617,30 @@ function teamCharts(rows){
 function renderPrioridades(){REDRAW=renderPrioridades;
   const viewId=PRIO_VIEW||CURRENT.id, viewOwn=viewId===CURRENT.id;
   PRIOLIST=PRIO_ALL.filter(it=>it.ownerId===viewId);
-  const limU=(()=>{const d=new Date(HOY+'T00:00:00');d.setDate(d.getDate()+3);return d.toISOString().slice(0,10);})();
-  const tasks=TASKS.filter(t=>t.who===viewId&&taskWS(t)===CURRENT_WS&&t.estado!=='Completada');
-  const esImp=t=>t.prioridad==='Alta';
-  const esUrg=t=>!!t.vence&&t.vence<=limU;
-  const q={hu:[],hn:[],uu:[],nn:[]};
-  tasks.forEach(t=>{const i=esImp(t),u=esUrg(t);if(i&&u)q.hu.push(t);else if(i&&!u)q.hn.push(t);else if(!i&&u)q.uu.push(t);else q.nn.push(t);});
-  const ord=(a,b)=>(a.vence||'9999').localeCompare(b.vence||'9999');
-  Object.values(q).forEach(l=>l.sort(ord));
-  const card=t=>{const pc=prioColor[t.prioridad];return `<div onclick="openTask('${t.key}')" class="cursor-pointer rounded-lg border border-slate-200 bg-white p-2.5 hover:shadow-sm">
-    <div class="text-sm font-medium text-slate-700 leading-snug">${t.origin==='instruccion'?'📌 ':''}${t.title}</div>
-    <div class="flex items-center flex-wrap gap-2 mt-1 text-[11px]">
-      <span class="px-1.5 py-0.5 rounded bg-${pc}-100 text-${pc}-700 font-medium">${t.prioridad}</span>
-      <span class="text-slate-500">👤 ${memberName(t.who).split(' ')[0]}</span>
-      ${t.vence?`<span class="${isVencida(t)?'text-rose-600 font-semibold':'text-slate-400'}">📅 ${fdate(t.vence)}${isVencida(t)?' · vencida':''}</span>`:''}
-    </div></div>`;};
+  // Espacio personal: SOLO las prioridades que el propio usuario escribe (priority_items).
+  // Las tareas e instrucciones del sistema NO se registran aquí.
   const pq=k=>PRIOLIST.filter(it=>it.quadrant===k);
-  const quad=(key,title,sub,color,list)=>{const mine=pq(key);return `<div class="rounded-xl border-2 border-${color}-300 bg-white p-3 shadow-sm flex flex-col">
-    <div class="flex items-center justify-between mb-2"><div><div class="font-bold text-${color}-600 text-sm">${title}</div><div class="text-[11px] text-slate-500">${sub}</div></div><span class="text-xs font-bold text-${color}-700 bg-${color}-100 rounded-full px-2 py-0.5">${mine.length+list.length}</span></div>
+  const pqAct=k=>pq(k).filter(it=>!it.done);
+  const quad=(key,title,sub,color)=>{const mine=pq(key);return `<div class="rounded-xl border-2 border-${color}-300 bg-white p-3 shadow-sm flex flex-col">
+    <div class="flex items-center justify-between mb-2"><div><div class="font-bold text-${color}-600 text-sm">${title}</div><div class="text-[11px] text-slate-500">${sub}</div></div><span class="text-xs font-bold text-${color}-700 bg-${color}-100 rounded-full px-2 py-0.5">${mine.length}</span></div>
     <div class="space-y-1.5 max-h-72 overflow-y-auto pr-1 mb-2 flex-1">
       ${mine.map(it=>viewOwn?`<div class="flex items-center gap-2 group">
         <input type="checkbox" ${it.done?'checked':''} onchange="togglePrioItem('${it.id}',this.checked)" class="accent-[#1e3a8a] w-4 h-4 shrink-0 cursor-pointer"/>
         <input value="${escP(it.text)}" onchange="editPrioItem('${it.id}',this.value)" placeholder="(vacío para eliminar)" class="flex-1 min-w-0 bg-transparent outline-none border-b border-transparent focus:border-slate-200 text-sm ${it.done?'line-through text-slate-400':'text-slate-700'}"/>
         <button onclick="delPrioItem('${it.id}')" title="Eliminar" class="text-slate-300 hover:text-rose-500 text-base shrink-0 opacity-60 group-hover:opacity-100">×</button></div>`:`<div class="flex items-center gap-2 text-sm"><span class="text-${color}-500 shrink-0">${it.done?'☑':'☐'}</span><span class="flex-1 ${it.done?'line-through text-slate-400':'text-slate-700'}">${escP(it.text)}</span></div>`).join('')}
-      ${list.length?`<div class="text-[10px] text-slate-400 uppercase tracking-wide pt-1">Tareas que caen aquí</div>${list.map(card).join('')}`:''}
-      ${(!mine.length&&!list.length)?`<div class="text-xs text-slate-400 py-3 text-center">${viewOwn?'Vacío. Escribe abajo para agregar tu prioridad.':'Sin prioridades en este cuadrante.'}</div>`:''}
+      ${!mine.length?`<div class="text-xs text-slate-400 py-3 text-center">${viewOwn?'Vacío. Escribe abajo para agregar tu prioridad.':'Sin prioridades en este cuadrante.'}</div>`:''}
     </div>
     ${viewOwn?`<div class="flex gap-1.5">
       <input id="prio_in_${key}" placeholder="+ Escribe una prioridad…" onkeydown="if(event.key==='Enter')addPrioItem('${key}')" class="flex-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs outline-none focus:border-${color}-400"/>
       <button onclick="addPrioItem('${key}')" class="rounded-lg bg-${color}-500 hover:opacity-90 text-white text-sm px-3 font-bold">+</button>
     </div>`:''}</div>`;};
-  const venc=tasks.filter(isVencida).length, hoy=tasks.filter(t=>t.vence===HOY).length, prox=tasks.filter(t=>t.vence&&t.vence>HOY&&t.vence<=limU).length, sinF=tasks.filter(t=>!t.vence).length, total=tasks.length+PRIOLIST.filter(x=>!x.done).length;
-  const di=[{l:'🔴 Hacer ahora',v:q.hu.length+pq('hu').length,col:'#f43f5e'},{l:'🔵 Planificar',v:q.hn.length+pq('hn').length,col:'#3b82f6'},{l:'🟡 Atender pronto',v:q.uu.length+pq('uu').length,col:'#f59e0b'},{l:'⚪ Cuando se pueda',v:q.nn.length+pq('nn').length,col:'#94a3b8'}];
-  const urg=[['Vencidas',venc,'#f43f5e'],['Vencen hoy',hoy,'#f59e0b'],['Próx. 3 días',prox,'#3b82f6'],['Sin fecha',sinF,'#94a3b8']];
-  const maxU=Math.max(1,venc,hoy,prox,sinF);
+  const activas=PRIOLIST.filter(x=>!x.done).length, completadas=PRIOLIST.filter(x=>x.done).length;
+  const di=[{l:'🔴 Hacer ahora',v:pqAct('hu').length,col:'#f43f5e'},{l:'🔵 Planificar',v:pqAct('hn').length,col:'#3b82f6'},{l:'🟡 Atender pronto',v:pqAct('uu').length,col:'#f59e0b'},{l:'⚪ Cuando se pueda',v:pqAct('nn').length,col:'#94a3b8'}];
   const stat=(l,v,c,ic)=>`<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><div class="flex items-center justify-between"><span class="text-xs text-slate-500">${l}</span><span class="text-slate-300">${ic}</span></div><div class="text-2xl font-bold text-${c}-600 tabular-nums mt-1">${v}</div></div>`;
   main.innerHTML=`<div class="p-6 max-w-6xl mx-auto">
     <h1 class="text-xl font-bold text-slate-900 mb-1">🔥 Prioridades${viewOwn?'':' · '+memberName(viewId)}</h1>
-    <p class="text-sm text-slate-500 mb-3">${viewOwn?'Tu matriz de decisión personal':'👁 Matriz de decisión de '+memberName(viewId)+' (solo lectura)'} · ${wsName(CURRENT_WS)}</p>
+    <p class="text-sm text-slate-500 mb-3">${viewOwn?'Tu espacio personal de prioridades':'👁 Prioridades personales de '+memberName(viewId)+' (solo lectura)'} · ${wsName(CURRENT_WS)}</p>
+    ${!viewOwn?'<div class="mb-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 text-xs px-3 py-2">👁 Vista de solo lectura. Este es el espacio personal del funcionario: puedes verlo, pero no intervenir en sus prioridades.</div>':''}
     ${CURRENT.role==='admin'?`<div class="flex flex-wrap items-center gap-1.5 mb-4">
       <span class="text-xs text-slate-500 mr-1">👥 Ver matriz de:</span>
       <button onclick="verMatrizDe('${CURRENT.id}')" class="text-xs rounded-lg px-2.5 py-1 ${viewOwn?'bg-inst text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}">🙋 La mía</button>
@@ -674,22 +660,16 @@ function renderPrioridades(){REDRAW=renderPrioridades;
           <div class="rounded-lg border-2 border-amber-300 p-3"><div class="font-bold text-amber-600 text-sm">🟡 Atender pronto</div><div class="text-[11px] text-slate-500 mt-1">Urgentes pero de menor prioridad. <b>Resuélvelas rápido o delega.</b></div></div>
           <div class="rounded-lg border-2 border-slate-300 p-3"><div class="font-bold text-slate-600 text-sm">⚪ Cuando se pueda</div><div class="text-[11px] text-slate-500 mt-1">Ni urgente ni prioritario. <b>Hazlas si sobra tiempo o descártalas.</b></div></div>
         </div>
-        <p class="text-[11px] text-slate-400 mt-3">Cada tarea se ubica según su <b>prioridad</b> (importante = Alta) y su <b>plazo</b> (urgente = vence en ≤3 días o ya venció). Los colores coinciden con los de tu matriz de abajo.</p>
+        <p class="text-[11px] text-slate-400 mt-3">Ubica <b>tú mismo</b> cada prioridad en el cuadrante que corresponda según su importancia y urgencia. Es un espacio personal: las tareas e instrucciones del sistema no aparecen aquí.</p>
       </div>
     </details>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-      ${stat('Prioridades activas',total,'slate','📌')}${stat('Hacer ahora',q.hu.length+pq('hu').length,'rose','🔥')}${stat('Vencidas',venc,'rose','⚠')}${stat('Vencen hoy',hoy,'amber','🕒')}
+      ${stat('Prioridades activas',activas,'slate','📌')}${stat('Hacer ahora',pqAct('hu').length,'rose','🔥')}${stat('Planificar',pqAct('hn').length,'blue','🗓')}${stat('Completadas',completadas,'emerald','✅')}
     </div>
-    <div class="grid md:grid-cols-2 gap-4 mb-5">
-      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h3 class="text-sm font-bold text-slate-700 mb-3">📊 Distribución por cuadrante</h3>
-        <div class="flex items-center gap-5">${donutSVG(di.map(i=>({v:i.v,col:i.col})))}
-          <div class="flex-1">${di.map(i=>`<div class="flex items-center gap-2 text-sm py-0.5"><span class="w-3 h-3 rounded-sm" style="background:${i.col}"></span><span class="flex-1 text-slate-600">${i.l}</span><span class="font-bold tabular-nums text-slate-700">${i.v}</span></div>`).join('')}</div>
-        </div>
-      </div>
-      <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <h3 class="text-sm font-bold text-slate-700 mb-3">⏰ Urgencia de plazos</h3>
-        ${urg.map(([l,v,c])=>`<div class="flex items-center gap-2 mb-2.5"><span class="w-20 text-xs text-slate-600">${l}</span><div class="flex-1 h-4 bg-slate-100 rounded overflow-hidden"><div class="h-full rounded" style="width:${Math.round(v/maxU*100)}%;background:${c}"></div></div><span class="w-6 text-right text-xs tabular-nums text-slate-500">${v}</span></div>`).join('')}
+    <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm mb-5">
+      <h3 class="text-sm font-bold text-slate-700 mb-3">📊 Distribución por cuadrante <span class="font-normal text-slate-400 text-xs">· prioridades activas</span></h3>
+      <div class="flex items-center gap-5">${donutSVG(di.map(i=>({v:i.v,col:i.col})))}
+        <div class="flex-1">${di.map(i=>`<div class="flex items-center gap-2 text-sm py-0.5"><span class="w-3 h-3 rounded-sm" style="background:${i.col}"></span><span class="flex-1 text-slate-600">${i.l}</span><span class="font-bold tabular-nums text-slate-700">${i.v}</span></div>`).join('')}</div>
       </div>
     </div>
     <div class="flex items-center justify-between mb-2">
@@ -697,12 +677,12 @@ function renderPrioridades(){REDRAW=renderPrioridades;
       ${(viewOwn&&PRIOLIST.some(x=>x.done))?`<button onclick="limpiarPrioridades()" class="shrink-0 text-xs rounded-lg border border-slate-200 text-slate-500 hover:border-rose-300 hover:text-rose-600 px-2.5 py-1">🧹 Limpiar completadas (${PRIOLIST.filter(x=>x.done).length})</button>`:''}
     </div>
     <div class="grid md:grid-cols-2 gap-4 items-stretch">
-      ${quad('hu','🔴 Hacer ahora','Importante y urgente','rose',q.hu)}
-      ${quad('hn','🔵 Planificar','Importante, sin apuro','blue',q.hn)}
-      ${quad('uu','🟡 Atender pronto','Urgente, prioridad media/baja','amber',q.uu)}
-      ${quad('nn','⚪ Cuando se pueda','Ni urgente ni prioritario','slate',q.nn)}
+      ${quad('hu','🔴 Hacer ahora','Importante y urgente','rose')}
+      ${quad('hn','🔵 Planificar','Importante, sin apuro','blue')}
+      ${quad('uu','🟡 Atender pronto','Urgente, prioridad media/baja','amber')}
+      ${quad('nn','⚪ Cuando se pueda','Ni urgente ni prioritario','slate')}
     </div>
-    <div class="text-[11px] text-slate-400 mt-3">Escribe tus prioridades en cualquier cuadrante (independientes de las tareas). Las <b>tareas</b> del sistema se ubican solas según prioridad (Alta) y plazo (≤3 días).</div>
+    <div class="text-[11px] text-slate-400 mt-3">Este es tu espacio personal: las prioridades las escribes tú en cada cuadrante. Las <b>tareas e instrucciones</b> del sistema <b>no</b> se registran aquí.</div>
   </div>`;
 }
 // ── Prioridades en Supabase (sincronizadas). El admin puede VER la matriz de cada funcionario. ──
