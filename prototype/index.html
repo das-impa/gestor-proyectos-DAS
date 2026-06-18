@@ -1899,8 +1899,28 @@ function showApp(){
   document.getElementById('userName').textContent=CURRENT.display_name||CURRENT.name;
   document.getElementById('userRole').textContent=roleLabel(CURRENT.role);
   buildNav(); buildBellMenu(); renderPanel();
+  resetInactivityTimer();
 }
-async function logout(){try{await sb.auth.signOut();}catch(e){}CURRENT=null;document.getElementById('app').classList.add('hidden');document.getElementById('login').classList.remove('hidden');document.getElementById('loginPass').value='';}
+// ── Cierre de sesión automático por inactividad ──
+const INACTIVITY_MIN=30;
+let _inactivityTimer=null, _inactividad=false;
+function resetInactivityTimer(){
+  if(_inactivityTimer)clearTimeout(_inactivityTimer);
+  if(!CURRENT)return;
+  _inactivityTimer=setTimeout(async()=>{
+    if(!CURRENT)return;
+    _inactividad=true; await logout();
+  }, INACTIVITY_MIN*60*1000);
+}
+['mousemove','mousedown','keydown','scroll','touchstart','click'].forEach(ev=>
+  document.addEventListener(ev,()=>{ if(CURRENT)resetInactivityTimer(); },{passive:true}));
+async function logout(){try{await sb.auth.signOut();}catch(e){}CURRENT=null;
+  if(_inactivityTimer){clearTimeout(_inactivityTimer);_inactivityTimer=null;}
+  document.getElementById('app').classList.add('hidden');document.getElementById('login').classList.remove('hidden');document.getElementById('loginPass').value='';
+  const err=document.getElementById('loginError');
+  if(err){ if(_inactividad){err.textContent='Tu sesión se cerró automáticamente por inactividad ('+INACTIVITY_MIN+' min). Vuelve a ingresar.';err.classList.remove('hidden');} else err.classList.add('hidden'); }
+  _inactividad=false;
+}
 // ═══ Carga de datos reales desde Supabase ═══
 async function loadAll(){
   const q=async (t,sel='*')=>{const{data,error}=await sb.from(t).select(sel);if(error)console.warn('load '+t,error.message);return data||[];};
