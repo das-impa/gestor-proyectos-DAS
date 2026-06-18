@@ -1414,6 +1414,10 @@ function openRichForm(opts){
       if(dbErr(error,'No se pudo crear la tarea'))return;
       if(ga>0){await sb.from('task_expenses').insert({task_id:row.id,monto:ga,descripcion:'Gasto inicial',fecha:HOY});}
       await dbAct('creó la tarea',q);
+      if(st.who && st.who!==CURRENT.id && memberEmail(st.who)){
+        const pj=opts.projectId?(PROJECTS.find(x=>x.id===opts.projectId)||{}).name:'';
+        enviarCorreo(memberEmail(st.who),memberName(st.who),'📋 Nueva tarea asignada por '+CURRENT.name,'Hola '+memberName(st.who).split(' ')[0]+',\n\nSe te ha asignado una nueva tarea'+(pj?' en el proyecto «'+pj+'»':'')+':\n\n«'+q+'»'+(vence?'\n\n📅 Plazo: '+vence:'')+'\n\nIngresa al sistema para gestionarla:\nhttps://fabriciocespedes-bit.github.io/gestor-proyectos-DAS/\n\n— DAS Control de Gestión Sanitaria\n\n⚠️ Este es un correo automático del sistema. Por favor no responder a esta dirección.');
+      }
     }
     await loadAll(); REDRAW();};
   document.getElementById('modalBackdrop').classList.remove('hidden');
