@@ -320,7 +320,7 @@ function renderEspacios(){REDRAW=renderEspacios;
     <div class="grid sm:grid-cols-2 gap-3">
     ${WORKSPACES.filter(w=>CURRENT.role==='admin'||w.userIds.includes(CURRENT.id)).map(w=>{const np=PROJECTS.filter(p=>(p.workspaceId||'ws1')===w.id).length;const nd=TASKS.filter(t=>taskWS(t)===w.id&&!t.projectId).length;const active=w.id===CURRENT_WS;
       return `<div class="rounded-xl border ${active?'border-inst ring-1 ring-inst/30':'border-slate-200'} bg-white p-4 shadow-sm">
-        <div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="text-lg">🗂</span><span class="font-semibold text-slate-800">${w.name}</span>${w.primary?'<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-semibold">PRIMARIO</span>':''}</div>${active?'<span class="text-[10px] text-inst font-semibold">● activo</span>':''}</div>
+        <div class="flex items-center justify-between mb-2"><div class="flex items-center gap-2"><span class="text-lg">🗂</span><button type="button" onclick="previewEspacio('${w.id}')" class="font-semibold text-slate-800 hover:text-inst hover:underline text-left" title="Ver proyectos de este espacio">${w.name}</button>${w.primary?'<span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-semibold">PRIMARIO</span>':''}</div>${active?'<span class="text-[10px] text-inst font-semibold">● activo</span>':''}</div>
         <div class="flex -space-x-1.5 mb-3">${w.userIds.slice(0,6).map(u=>`<span class="w-6 h-6 rounded-full bg-inst/10 text-inst grid place-items-center text-[9px] font-semibold ring-2 ring-white">${initials(memberName(u))}</span>`).join('')}${w.userIds.length>6?`<span class="w-6 h-6 rounded-full bg-slate-100 text-slate-500 grid place-items-center text-[9px] ring-2 ring-white">+${w.userIds.length-6}</span>`:''}</div>
         <div class="text-xs text-slate-500 mb-3">📁 ${np} proyectos · 📌 ${nd} tareas directas · 👥 ${w.userIds.length} usuarios</div>
         <div class="flex gap-2">
@@ -333,6 +333,28 @@ function renderEspacios(){REDRAW=renderEspacios;
     </div></div>`;
 }
 function entrarEspacio(id){CURRENT_WS=id;buildNav();renderPanel();}
+function previewEspacio(wid){
+  const w=WORKSPACES.find(x=>x.id===wid);if(!w)return;
+  document.getElementById('espPreview')?.remove();
+  const ps=PROJECTS.filter(p=>(p.workspaceId||'ws1')===wid);
+  const estChip=e=>{const c={'En curso':'emerald','Pendiente':'amber','Completado':'blue','Pausado':'slate','Atrasado':'rose'}[e]||'slate';return `<span class="text-[10px] px-1.5 py-0.5 rounded bg-${c}-100 text-${c}-700">${escP(e||'')}</span>`;};
+  const list = ps.length ? ps.map(p=>`<div class="flex items-center gap-2 px-3 py-2 border-b border-slate-100 last:border-0">
+      <span>📁</span><span class="text-sm text-slate-700 flex-1 truncate" title="${escP(p.title||p.name||'')}">${escP(p.title||p.name||'')}</span>${estChip(p.estado)}</div>`).join('')
+    : '<div class="text-sm text-slate-400 px-3 py-8 text-center">Este espacio aún no tiene proyectos.</div>';
+  const el=document.createElement('div');
+  el.id='espPreview';
+  el.className='fixed inset-0 z-[60] flex items-center justify-center';
+  el.innerHTML=`<div class="absolute inset-0 bg-slate-900/30" onclick="document.getElementById('espPreview').remove()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl border border-slate-200 w-80 max-h-[70vh] overflow-hidden">
+      <div class="flex items-center justify-between px-4 py-3 bg-inst text-white">
+        <div class="flex items-center gap-2 font-semibold text-sm truncate">🗂 ${escP(w.name)}</div>
+        <button type="button" onclick="document.getElementById('espPreview').remove()" class="w-6 h-6 grid place-items-center rounded hover:bg-white/20 shrink-0">✕</button>
+      </div>
+      <div class="px-3 py-1.5 text-[11px] text-slate-400 border-b border-slate-100">📁 ${ps.length} proyecto(s)</div>
+      <div class="overflow-y-auto" style="max-height:calc(70vh - 84px)">${list}</div>
+    </div>`;
+  document.body.appendChild(el);
+}
 function renombrarEspacio(wid){const w=WORKSPACES.find(x=>x.id===wid);if(!w)return;
   if(!(CURRENT.role==='admin'||CURRENT.id===w.leader)){confirmModal('Acción no permitida','Solo el administrador o el líder puede renombrar el espacio.',()=>{},'Entendido');return;}
   openModal('Renombrar espacio',[{name:'name',label:'Nombre del espacio',required:true,full:true,value:w.name}],
