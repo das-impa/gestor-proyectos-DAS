@@ -1548,6 +1548,9 @@ function delUser(id){
     await dbAct('eliminó al usuario',m.name); await loadAll(); renderUsers();
   },'Eliminar usuario');
 }
+// Genera una contraseña robusta (sin caracteres ambiguos) que Chrome no marca como filtrada.
+function genPassword(){const c='abcdefghijkmnpqrstuvwxyz',C='ABCDEFGHJKLMNPQRSTUVWXYZ',d='23456789',s='!@#$%&*';const pick=set=>set[Math.floor(Math.random()*set.length)];let b='';for(let i=0;i<5;i++)b+=pick(c);return pick(C)+b+pick(d)+pick(d)+pick(s);}
+function genFillPass(){const v=genPassword();const i=document.querySelector('#modalForm [name=pass]');if(i){i.value=v;if(i.type==='password')i.type='text';}const sp=document.getElementById('genPassShow');if(sp)sp.textContent='→ '+v+'  (cópiala y entrégala al usuario)';}
 function editarUsuario(id){
   if(CURRENT.role!=='admin')return;
   const m=MEMBERS.find(x=>x.id===id);if(!m)return;
@@ -1557,6 +1560,7 @@ function editarUsuario(id){
     {name:'area',label:'Área',type:'select',options:AREAS,value:m.area||'Salud'},
     {name:'email',label:'Correo de acceso',full:true,value:m.email||''},
     {name:'pass',label:'Nueva contraseña (opcional)',type:'password',full:true,ph:'Déjalo vacío para no cambiarla'},
+    {name:'_genpass',type:'html',html:`<div class="-mt-1"><button type="button" onclick="genFillPass()" class="text-xs rounded-lg bg-inst/10 text-inst hover:bg-inst/20 font-medium px-2.5 py-1.5">🎲 Generar contraseña segura</button> <span id="genPassShow" class="text-xs text-emerald-700 font-mono ml-1"></span></div>`},
   ],async d=>{
     const {data,error}=await sb.functions.invoke('editar-usuario',{body:{id, name:d.name, cargo:d.cargo||'', area:d.area, email:(d.email||'').trim().toLowerCase(), password:d.pass||undefined}});
     const err=(error&&error.message)||(data&&data.error);
@@ -1575,6 +1579,7 @@ function nuevoUsuario(){
     {name:'role',label:'Rol',type:'select',options:['Funcionario','Directivo'],value:'Funcionario'},
     {name:'email',label:'Correo institucional (acceso)',required:true,full:true,ph:'usuario@gestionsanitaria.cl'},
     {name:'pass',label:'Contraseña inicial',required:true,full:true,ph:'Mínimo 6 caracteres · el usuario podrá cambiarla'},
+    {name:'_genpass',type:'html',html:`<div class="-mt-1"><button type="button" onclick="genFillPass()" class="text-xs rounded-lg bg-inst/10 text-inst hover:bg-inst/20 font-medium px-2.5 py-1.5">🎲 Generar contraseña segura</button> <span id="genPassShow" class="text-xs text-emerald-700 font-mono ml-1"></span></div>`},
   ],async d=>{
     const {data,error}=await sb.functions.invoke('crear-usuario',{body:{
       name:d.name, email:(d.email||'').trim().toLowerCase(), password:d.pass,
