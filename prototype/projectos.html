@@ -11,6 +11,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script>
@@ -151,6 +152,41 @@
 const SB_URL='https://kianrcgzpnzfmeklmjww.supabase.co';
 const SB_KEY='sb_publishable_l6vqjgK-4fDKo1MkpcBOZg_r_U7pz8v';
 const sb = window.supabase.createClient(SB_URL, SB_KEY);
+// ═══════════════ GOOGLE CALENDAR (OAuth) ═══════════════
+const GOOGLE_CLIENT_ID=''; // ← PEGAR aquí el Client ID de Google (xxxx.apps.googleusercontent.com)
+let GCAL_TOKEN=null, GCAL_TC=null;
+function gcalReady(){return typeof google!=='undefined'&&google.accounts&&google.accounts.oauth2;}
+function gcalConnect(onOk){
+  if(!GOOGLE_CLIENT_ID){confirmModal('Google Calendar no configurado','Falta configurar el Client ID de Google (lo hace el administrador). Apenas esté, podrás conectar tu calendario.',()=>{},'Entendido');return;}
+  if(!gcalReady()){confirmModal('Google no disponible','No se pudo cargar Google. Revisa tu conexión e inténtalo de nuevo.',()=>{},'Entendido');return;}
+  if(!GCAL_TC){GCAL_TC=google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID,scope:'https://www.googleapis.com/auth/calendar.events',callback:()=>{}});}
+  GCAL_TC.callback=(resp)=>{if(resp&&resp.access_token){GCAL_TOKEN=resp.access_token;if(onOk)onOk();}else{confirmModal('No autorizado','No se completó la conexión con Google.',()=>{},'Entendido');}};
+  GCAL_TC.requestAccessToken();
+}
+function gcalWith(cb){ if(GCAL_TOKEN)cb(); else gcalConnect(cb); }
+async function gcalPost(ev){
+  const r=await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events',{method:'POST',headers:{'Authorization':'Bearer '+GCAL_TOKEN,'Content-Type':'application/json'},body:JSON.stringify(ev)});
+  if(r.ok)return true;
+  if(r.status===401)GCAL_TOKEN=null; // token vencido → reconectar
+  const e=await r.json().catch(()=>({})); throw new Error((e.error&&e.error.message)||('HTTP '+r.status));
+}
+function gcalAddMeeting(id){const m=MEETINGS.find(x=>x.id===id);if(!m)return;
+  gcalWith(async()=>{try{
+    const [hh,mm]=String(m.time||'10:00').split(':').map(n=>+n||0);
+    const p2=n=>String(n).padStart(2,'0');
+    const ev={summary:'🎯 '+m.title,location:m.place||'',description:(m.notes?m.notes+'\n\n':'')+'DAS Control de Gestión Sanitaria',
+      start:{dateTime:m.date+'T'+p2(hh)+':'+p2(mm)+':00',timeZone:'America/Santiago'},
+      end:{dateTime:m.date+'T'+p2((hh+1)%24)+':'+p2(mm)+':00',timeZone:'America/Santiago'}};
+    await gcalPost(ev); confirmModal('Agregado a Google Calendar','«'+m.title+'» se añadió a tu Google Calendar.',()=>{},'Entendido');
+  }catch(e){confirmModal('No se pudo agregar','Google Calendar: '+e.message,()=>{},'Entendido');}});
+}
+function gcalAddEvento(id){const ev0=EVENTS.find(x=>x.id===id);if(!ev0)return;
+  gcalWith(async()=>{try{
+    const d=new Date(ev0.date+'T00:00:00');d.setDate(d.getDate()+1);const next=d.toISOString().slice(0,10);
+    const ev={summary:'📌 '+ev0.title,description:'DAS Control de Gestión Sanitaria',start:{date:ev0.date},end:{date:next}};
+    await gcalPost(ev); confirmModal('Agregado a Google Calendar','«'+ev0.title+'» se añadió a tu Google Calendar.',()=>{},'Entendido');
+  }catch(e){confirmModal('No se pudo agregar','Google Calendar: '+e.message,()=>{},'Entendido');}});
+}
 // ═══════════════ DATOS (modelo IMPA) ═══════════════
 const HOY='2026-06-09';
 const ESTADOS=['Pendiente','En Progreso','En Revisión','Completada'];
@@ -412,6 +448,7 @@ function renderMeetings(){REDRAW=renderMeetings;const ms=MEETINGS.filter(m=>m.wo
       <div class="text-center shrink-0 w-12"><div class="text-[10px] text-slate-400 uppercase">${MESES[+m.date.slice(5,7)-1]}</div><div class="text-2xl font-bold text-inst leading-none">${+m.date.slice(8,10)}</div></div>
       <div class="flex-1 min-w-0"><div class="font-semibold text-slate-800">${m.title}</div><div class="text-xs text-slate-500">🕒 ${m.time} · 📍 ${m.place||'—'}</div>${m.notes?`<div class="text-xs text-slate-400 mt-0.5 truncate">${m.notes}</div>`:''}</div>
       <div class="flex -space-x-1.5 shrink-0">${m.attendees.map(u=>`<span class="w-6 h-6 rounded-full bg-inst/10 text-inst grid place-items-center text-[9px] font-semibold ring-2 ring-white" title="${memberName(u)}">${initials(memberName(u))}</span>`).join('')}</div>
+      <button onclick="gcalAddMeeting('${m.id}')" class="shrink-0 w-8 h-8 grid place-items-center rounded-lg text-slate-400 hover:text-inst hover:bg-inst/5" title="Añadir a Google Calendar">📅</button>
       ${(CURRENT.role==='admin'||wsLeaderOf(m.workspaceId)===CURRENT.id||(m.attendees&&m.attendees[0]===CURRENT.id))?`<button onclick="delMeeting('${m.id}')" class="shrink-0 w-8 h-8 grid place-items-center rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50" title="Eliminar reunión">🗑</button>`:''}
     </div>`).join('')||'<div class="text-sm text-slate-400">Sin reuniones agendadas.</div>'}</div></div>`;
 }
@@ -1622,6 +1659,7 @@ function buildUserMenu(){
     <div class="px-4 py-3 border-b border-slate-100"><div class="text-[10px] text-slate-400">Sesión iniciada como</div><div class="font-semibold text-slate-800 text-sm">${CURRENT.name}</div></div>
     <button onclick="perfilConfig()" class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">⚙️ Configuración de Perfil</button>
     <button onclick="cambiarPass()" class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">🔑 Cambiar Contraseña</button>
+    <button onclick="closeMenus();gcalConnect(()=>confirmModal('Google Calendar conectado','Ya puedes añadir reuniones y eventos a tu Google Calendar (botón 📅).',()=>{},'Entendido'))" class="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2.5">📅 ${GCAL_TOKEN?'Google Calendar conectado ✓':'Conectar Google Calendar'}</button>
     <div class="px-4 py-2.5 text-sm text-slate-700 flex items-center justify-between"><span class="flex items-center gap-2.5">🌙 Modo Oscuro</span><button onclick="toggleDark(event)" class="w-9 h-5 rounded-full ${DARK?'bg-inst':'bg-slate-300'} relative transition-colors shrink-0"><span class="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all" style="left:${DARK?'18px':'2px'}"></span></button></div>
     <button onclick="logout()" class="w-full text-left px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 border-t border-slate-100">⎋ Cerrar Sesión</button>`;
 }
