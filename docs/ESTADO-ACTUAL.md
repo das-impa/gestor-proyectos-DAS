@@ -22,7 +22,7 @@ App de gestión de proyectos/tareas/prioridades para la **Ilustre Municipalidad 
 - **SQL ejecutado:** `0003_app_model.sql`, `seed-piloto.sql`, `0004_prioridades_checklist.sql` (tabla `priority_items` con RLS: dueño edita, **admin lee todas**).
 - ✅ `0005_notificaciones_extensiones.sql` ejecutado (tablas `notifications` + `deadline_extensions`).
 - ⚠️ **PENDIENTE de ejecutar (SQL):** `0006_extension_comentario.sql` (`response_comment`) · `0007_display_name.sql` (`profiles.display_name`).
-- ⚠️ **PENDIENTE de desplegar (Edge Function):** `recuperar-clave` (resetea contraseña a `123456` desde el login; service_role; sin auth del llamador).
+- ✅ **Edge Function `recuperar-clave` DESPLEGADA y probada** (resetea contraseña a `123456` desde el login; service_role; sin auth del llamador). Funciona.
 - **Edge Functions desplegadas (por el usuario, vía dashboard):** `crear-usuario` y `editar-usuario` (usan service_role; validan que el llamador sea admin).
 - ⚠️ `service_role` NUNCA en el cliente. Sin secretos reales en el repo.
 
