@@ -11,6 +11,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script>
@@ -151,6 +152,18 @@
 const SB_URL='https://kianrcgzpnzfmeklmjww.supabase.co';
 const SB_KEY='sb_publishable_l6vqjgK-4fDKo1MkpcBOZg_r_U7pz8v';
 const sb = window.supabase.createClient(SB_URL, SB_KEY);
+// ═══════════════ CORREO (EmailJS — gratis, envía desde tu correo institucional) ═══════════════
+const EMAILJS_PUBLIC_KEY='', EMAILJS_SERVICE_ID='', EMAILJS_TEMPLATE_ID=''; // ← PEGAR los 3 IDs de EmailJS
+let _mailInit=false;
+function mailReady(){return typeof emailjs!=='undefined'&&EMAILJS_PUBLIC_KEY&&EMAILJS_SERVICE_ID&&EMAILJS_TEMPLATE_ID;}
+async function enviarCorreo(toEmail,toName,subject,message){
+  if(!mailReady()||!toEmail)return false;
+  try{ if(!_mailInit){emailjs.init({publicKey:EMAILJS_PUBLIC_KEY});_mailInit=true;}
+    await emailjs.send(EMAILJS_SERVICE_ID,EMAILJS_TEMPLATE_ID,{to_email:toEmail,to_name:toName||'',subject:subject,message:message,from_name:CURRENT?CURRENT.name:'DAS'});
+    return true;
+  }catch(e){console.warn('correo',e);return false;}
+}
+const memberEmail=id=>MEMBERS.find(m=>m.id===id)?.email||'';
 // ═══════════════ CALENDARIO: enlace a Google Calendar + descarga .ics (gratis, sin configuración) ═══════════════
 const _p2=n=>String(n).padStart(2,'0');
 function gcalOpen(text,start,end,details,location,allDay){
@@ -1395,6 +1408,7 @@ function openRichForm(opts){
       const {data:row,error}=await sb.from('tasks').insert({task_key:'INS-'+n,workspace_id:CURRENT_WS,project_id:null,title:q,assignee_id:st.who,estado:'Pendiente',prioridad,vence,presupuesto:0,etiquetas:eti,origin:'instruccion',enviada_por:CURRENT.name}).select().single();
       if(dbErr(error,'No se pudo enviar la instrucción'))return;
       await dbAct('envió una instrucción a '+memberName(st.who).split(' ')[0],q);
+      enviarCorreo(memberEmail(st.who),memberName(st.who),'📌 Nueva instrucción de '+CURRENT.name,'Hola '+memberName(st.who).split(' ')[0]+',\n\nTienes una nueva instrucción asignada por '+CURRENT.name+':\n\n«'+q+'»'+(vence?'\n\n📅 Plazo: '+vence:'')+'\n\nIngresa al sistema para gestionarla:\nhttps://fabriciocespedes-bit.github.io/gestor-proyectos-DAS/\n\n— DAS Control de Gestión Sanitaria');
     } else {
       const {data:row,error}=await sb.from('tasks').insert({task_key:(opts.projectId?'T-':'D-')+n,workspace_id:CURRENT_WS,project_id:opts.projectId||null,title:q,assignee_id:st.who,estado:opts.estado||'Pendiente',prioridad,vence,presupuesto:pres,etiquetas:eti,origin:opts.projectId?'propia':'directa'}).select().single();
       if(dbErr(error,'No se pudo crear la tarea'))return;
