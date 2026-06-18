@@ -185,7 +185,9 @@ function gcalAddMeeting(id){const m=MEETINGS.find(x=>x.id===id);if(!m)return;con
 function icsMeeting(id){const m=MEETINGS.find(x=>x.id===id);if(!m)return;const t=_meetTimes(m);icsDownload(m.title,'🎯 '+m.title,t.s,t.e,(m.notes||'')+' · DAS',m.place,false);}
 function gcalAddEvento(id){const e=EVENTS.find(x=>x.id===id);if(!e)return;const ymd=String(e.date).replace(/-/g,'');const d=new Date(e.date+'T00:00:00');d.setDate(d.getDate()+1);const nx=d.toISOString().slice(0,10).replace(/-/g,'');gcalOpen('📌 '+e.title,ymd,nx,'DAS Control de Gestión Sanitaria','',true);}
 // ═══════════════ DATOS (modelo IMPA) ═══════════════
-const HOY='2026-06-09';
+// HOY = fecha real local (zona horaria del equipo), en formato YYYY-MM-DD.
+const HOY=(()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);})();
+const fechaMas=(n,base)=>{const d=new Date((base||HOY)+'T00:00:00');d.setDate(d.getDate()+(+n||0));return d.toISOString().slice(0,10);};
 const ESTADOS=['Pendiente','En Progreso','En Revisión','Completada'];
 let BOARD_COLS=['Pendiente','En Progreso','En Revisión','Completada'];
 const taskCol=t=>t.col||t.estado;
@@ -285,9 +287,9 @@ function buildNav(){
     ['espacios','🗂 Espacios de trabajo'],
     ['projects','💼 Proyectos'],
     ['tasks','✅ Tareas'],
+    ['instrucciones',admin?'⚡ Instrucciones':'📌 Mis instrucciones'],
     ['extensiones','📅 Solicitudes de plazo'],
     admin&&['personas','🧑 Personas'],
-    admin&&['instrucciones','⚡ Instrucciones'],
     admin&&['users','👥 Usuarios'],
     ['rendimiento',admin?'📈 Rendimiento':'📈 Mi rendimiento'],
     ['reports',admin?'📊 Reportes':'📊 Mis reportes'],
@@ -506,7 +508,7 @@ function statOf(mid){const ts=memberTasks(mid);return {
   comp:ts.filter(t=>t.estado==='Completada').length,
   venc:ts.filter(isVencida).length,
   hoy:ts.filter(t=>t.vence===HOY&&t.estado!=='Completada').length,
-  prox:ts.filter(t=>t.vence>HOY&&t.vence<='2026-06-12'&&t.estado!=='Completada').length,
+  prox:ts.filter(t=>t.vence>HOY&&t.vence<=fechaMas(3)&&t.estado!=='Completada').length,
   load:memberLoad(mid)};}
 function cardFunc(m,s){const l=s.load;return `<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
   <div class="flex items-center gap-3 mb-3">
@@ -787,7 +789,7 @@ function renderPanel(){
   const cnt=e=>mine.filter(t=>efEstado(t)===e).length;
   const venc=mine.filter(isVencida).length;
   const venceHoy=mine.filter(t=>t.vence===HOY&&t.estado!=='Completada').length;
-  const prox3=mine.filter(t=>t.vence>HOY&&t.vence<='2026-06-12'&&t.estado!=='Completada').length;
+  const prox3=mine.filter(t=>t.vence>HOY&&t.vence<=fechaMas(3)&&t.estado!=='Completada').length;
   const inst=TASKS.filter(t=>t.origin==='instruccion'&&taskWS(t)===CURRENT_WS);
   const recientes=mine.slice().sort((a,b)=>(b.vence||'').localeCompare(a.vence||'')).slice(0,5);
   const kpi=(l,v,c,i)=>`<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -854,9 +856,9 @@ function taskRow(t){const c=estadoColor[efEstado(t)],pc=prioColor[t.prioridad];
 // ═══════════════ TAREAS (global, con vistas) ═══════════════
 function renderTasks(){
   REDRAW=renderTasks; SCREEN_PROJECT=null;
-  const all=visibleTasks().filter(t=>(!FILTER.estado||efEstado(t)===FILTER.estado)&&(!FILTER.prioridad||t.prioridad===FILTER.prioridad)&&(!FILTER.who||t.who===FILTER.who));
-  const directas=all.filter(t=>!t.projectId).length;
-  main.innerHTML=workspaceHeader('Tareas',`${all.length} tareas · ${directas} directas · ${wsName(CURRENT_WS)}`,false)+`<div id="wview"></div>`;
+  const all=visibleTasks().filter(t=>t.origin!=='instruccion'&&(!FILTER.estado||efEstado(t)===FILTER.estado)&&(!FILTER.prioridad||t.prioridad===FILTER.prioridad)&&(!FILTER.who||t.who===FILTER.who));
+  const conProy=all.filter(t=>t.projectId).length, directas=all.filter(t=>!t.projectId).length;
+  main.innerHTML=workspaceHeader('Tareas',`${all.length} tareas · ${conProy} de proyectos · ${directas} directas · ${wsName(CURRENT_WS)}`,false)+`<div id="wview"></div>`;
   wireWorkspace(()=>all);
 }
 
@@ -1187,24 +1189,25 @@ function calMonth(){const dow=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];cons
 // ═══════════════ INSTRUCCIONES (directivo → equipo) ═══════════════
 let INSTR_F={estado:'',who:'',limit:10};
 function renderInstrucciones(){REDRAW=renderInstrucciones;
-  const inst=instructionsAll();
+  const admin=CURRENT.role==='admin';
+  const inst=admin?instructionsAll():instructionsAll().filter(t=>t.who===CURRENT.id&&taskWS(t)===CURRENT_WS);
   const whoOpts=[...new Set(inst.map(t=>t.who))];
-  const filtered=inst.filter(t=>(!INSTR_F.estado||efEstado(t)===INSTR_F.estado)&&(!INSTR_F.who||t.who===INSTR_F.who));
+  const filtered=inst.filter(t=>(!INSTR_F.estado||efEstado(t)===INSTR_F.estado)&&(!admin||!INSTR_F.who||t.who===INSTR_F.who));
   const shown=filtered.slice(0,INSTR_F.limit);
   const selCls="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-inst";
   main.innerHTML=`<div class="p-6 max-w-4xl mx-auto">
-    <div class="flex items-center justify-between mb-1"><h1 class="text-xl font-bold text-slate-900">Instrucciones enviadas</h1>
-      <button onclick="nuevaInstruccion()" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm font-medium px-3 py-2">+ Nueva instrucción</button></div>
-    <p class="text-sm text-slate-500 mb-4">Tareas directas que asignas a funcionarios, aparte de sus propios proyectos.</p>
+    <div class="flex items-center justify-between mb-1"><h1 class="text-xl font-bold text-slate-900">${admin?'Instrucciones enviadas':'Mis instrucciones'}</h1>
+      ${admin?`<button onclick="nuevaInstruccion()" class="rounded-lg bg-inst hover:bg-inst-dark text-white text-sm font-medium px-3 py-2">+ Nueva instrucción</button>`:''}</div>
+    <p class="text-sm text-slate-500 mb-4">${admin?'Tareas directas que asignas a funcionarios, aparte de sus propios proyectos.':'Requerimientos o acciones puntuales que te asigna tu jefatura (independientes de los proyectos).'}</p>
     <div class="flex flex-wrap items-center gap-2 mb-3">
       <select onchange="INSTR_F.estado=this.value;renderInstrucciones()" class="${selCls}">
         <option value="">Todos los estados</option>
         ${['Pendiente','En Progreso','En Revisión','Completada','Vencida'].map(s=>`<option value="${s}" ${INSTR_F.estado===s?'selected':''}>${s}</option>`).join('')}
       </select>
-      <select onchange="INSTR_F.who=this.value;renderInstrucciones()" class="${selCls}">
+      ${admin?`<select onchange="INSTR_F.who=this.value;renderInstrucciones()" class="${selCls}">
         <option value="">Todos los responsables</option>
         ${whoOpts.map(w=>`<option value="${w}" ${INSTR_F.who===w?'selected':''}>${memberName(w)}</option>`).join('')}
-      </select>
+      </select>`:''}
       ${(INSTR_F.estado||INSTR_F.who)?`<button onclick="INSTR_F.estado='';INSTR_F.who='';renderInstrucciones()" class="text-xs text-slate-400 hover:text-rose-500 px-1">✕ limpiar</button>`:''}
       <div class="flex items-center gap-1 ml-auto text-xs"><span class="text-slate-400 mr-1">Visibles:</span>
         ${[10,25,50].map(n=>`<button onclick="INSTR_F.limit=${n};renderInstrucciones()" class="px-2.5 py-1 rounded-lg font-medium ${INSTR_F.limit===n?'bg-inst text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${n}</button>`).join('')}
@@ -1215,7 +1218,7 @@ function renderInstrucciones(){REDRAW=renderInstrucciones;
         <span class="text-inst">📌</span><span class="flex-1 text-slate-700">${t.title}</span>
         <span class="w-7 h-7 rounded-full bg-inst/10 text-inst grid place-items-center text-[10px] font-semibold">${memberName(t.who).slice(0,2)}</span>
         <span class="px-2 py-0.5 rounded-full bg-${c}-100 text-${c}-700 text-[11px] font-medium">${efEstado(t)}</span>
-        <span class="text-xs text-slate-400 w-12 text-right">${fdate(t.vence)}</span></div>`;}).join(''):`<div class="p-6 text-center text-sm text-slate-400">${inst.length?'Ninguna instrucción coincide con los filtros.':'Sin instrucciones enviadas.'}</div>`}
+        <span class="text-xs text-slate-400 w-12 text-right">${fdate(t.vence)}</span></div>`;}).join(''):`<div class="p-6 text-center text-sm text-slate-400">${inst.length?'Ninguna instrucción coincide con los filtros.':(admin?'Sin instrucciones enviadas.':'No tienes instrucciones asignadas.')}</div>`}
     </div>
     ${filtered.length?`<div class="text-xs text-slate-400 mt-2 text-right">Mostrando ${shown.length} de ${filtered.length}${filtered.length!==inst.length?' (de '+inst.length+' en total)':''}.</div>`:''}
   </div>`;
@@ -1411,8 +1414,8 @@ function openRichForm(opts){
         <button type="button" class="urg" data-u="Urgente" data-c="rose">🔴 Urgente</button></div></div>
     <div class="mt-4"><div class="text-xs font-bold tracking-wide text-slate-500 uppercase mb-1.5">Plazo</div>
       <div class="flex flex-wrap gap-1.5">${[['Sin plazo',''],['Hoy','0'],['Mañana','1'],['7 días','7'],['15 días','15'],['30 días','30']].map(([l,v])=>`<button type="button" class="pz rounded-lg border px-3 py-1.5 text-sm" data-p="${v}">${l}</button>`).join('')}</div>
-      <div class="flex items-center gap-2 mt-2"><span class="text-xs text-slate-500">Otra fecha:</span><input type="date" id="rf_fecha" min="${HOY}" class="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-inst"/></div>
-      <div class="text-[11px] text-slate-400 mt-1">El plazo no puede ser anterior a hoy (${fdate(HOY)}).</div></div>
+      <div class="flex items-center gap-2 mt-2"><span class="text-xs text-slate-500">Otra fecha:</span><input type="date" id="rf_fecha" ${isInstr?`min="${HOY}"`:''} class="flex-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-inst"/></div>
+      <div class="text-[11px] ${isInstr?'text-slate-400':'text-amber-600'} mt-1">${isInstr?'Las instrucciones solo pueden asignarse desde hoy ('+fdate(HOY)+') en adelante.':'⚠️ Si usas una fecha retroactiva (anterior a hoy) quedará registrada en «Registro» para auditoría.'}</div></div>
     <div class="mt-4"><div class="text-xs font-bold tracking-wide text-slate-500 uppercase mb-1.5">Etiquetas <span class="normal-case font-normal text-slate-400">(opcional)</span></div>
       <div class="flex flex-wrap gap-1.5">${ETI.map(e=>`<button type="button" class="eti rounded-lg border px-3 py-1.5 text-sm border-${labelColor(e)}-300 text-${labelColor(e)}-700" data-e="${e}">${e}</button>`).join('')}</div></div>
     ${isInstr?'':`<div class="mt-4 grid grid-cols-2 gap-3">
@@ -1433,8 +1436,12 @@ function openRichForm(opts){
   form.onsubmit=async e=>{e.preventDefault();const q=document.getElementById('rf_q').value.trim();if(!q){document.getElementById('rf_q').focus();return;}
     let vence=null;
     if(st.plazo==='__c'&&st.fecha)vence=st.fecha;
-    else if(st.plazo!==''&&st.plazo!=='__c'){const dt=new Date('2026-06-09T00:00:00');dt.setDate(dt.getDate()+ +st.plazo);vence=dt.toISOString().slice(0,10);}
-    if(vence&&vence<HOY){confirmModal('Fecha no válida','El plazo no puede ser anterior a hoy ('+fdate(HOY)+'). Corrige la fecha de vencimiento.',()=>{},'Entendido');return;}
+    else if(st.plazo!==''&&st.plazo!=='__c'){vence=fechaMas(+st.plazo);}
+    let retro=false;
+    if(vence&&vence<HOY){
+      if(isInstr){document.getElementById('rf_fecha').value='';confirmModal('Fecha no válida','Las instrucciones no pueden asignarse con fecha anterior a hoy ('+fdate(HOY)+'). Elige una fecha de hoy en adelante.',()=>{},'Entendido');return;}
+      retro=true; // tarea de proyecto con fecha retroactiva: permitida, pero auditada en Registro
+    }
     const prioridad={Normal:'Media',Alta:'Alta',Urgente:'Alta'}[st.urg];
     const eti=[...st.etiquetas]; if(st.urg==='Urgente'&&!eti.includes('Urgente'))eti.push('Urgente');
     const pres=+(document.getElementById('rf_pres')?.value)||0, ga=+(document.getElementById('rf_gasto')?.value)||0;
@@ -1450,6 +1457,7 @@ function openRichForm(opts){
       if(dbErr(error,'No se pudo crear la tarea'))return;
       if(ga>0){await sb.from('task_expenses').insert({task_id:row.id,monto:ga,descripcion:'Gasto inicial',fecha:HOY});}
       await dbAct('creó la tarea',q);
+      if(retro)await dbAct('⚠️ asignó una tarea con FECHA RETROACTIVA ('+fdate(vence)+') a '+memberName(st.who),q);
       if(st.who && st.who!==CURRENT.id && memberEmail(st.who)){
         const pj=opts.projectId?(PROJECTS.find(x=>x.id===opts.projectId)||{}).name:'';
         enviarCorreo(memberEmail(st.who),memberName(st.who),'📋 Nueva tarea asignada por '+CURRENT.name,'Hola '+memberName(st.who).split(' ')[0]+',\n\nSe te ha asignado una nueva tarea'+(pj?' en el proyecto «'+pj+'»':'')+':\n\n«'+q+'»'+(vence?'\n\n📅 Plazo: '+vence:'')+'\n\nIngresa al sistema para gestionarla:\nhttps://fabriciocespedes-bit.github.io/gestor-proyectos-DAS/\n\n— DAS Control de Gestión Sanitaria\n\n⚠️ Este es un correo automático del sistema. Por favor no responder a esta dirección.');
@@ -1767,7 +1775,7 @@ async function checkDeadlines(){
 function buildBellMenu(){
   if(!CURRENT)return;
   const ns=NOTIFS.filter(n=>n.user_id===CURRENT.id&&!n.read);
-  const meets=MEETINGS.filter(m=>m.workspaceId===CURRENT_WS&&m.date>=HOY&&m.date<='2026-06-13'&&!DISMISSED.has('r'+m.id));
+  const meets=MEETINGS.filter(m=>m.workspaceId===CURRENT_WS&&m.date>=HOY&&m.date<=fechaMas(4)&&!DISMISSED.has('r'+m.id));
   const total=ns.length+meets.length;
   let h=`<div class="px-4 py-2.5 border-b border-slate-100 font-semibold text-slate-800 text-sm flex items-center justify-between">🔔 Alertas <span class="flex items-center gap-2"><span class="text-xs text-slate-400">${total}</span>${ns.length?`<button onclick="clearAllNotifs(event)" class="text-[11px] text-inst hover:underline font-normal">Limpiar todo</button>`:''}</span></div><div class="max-h-[28rem] overflow-y-auto">`;
   if(!total)h+='<div class="px-4 py-6 text-center text-sm text-slate-400">✅ Sin alertas pendientes</div>';
