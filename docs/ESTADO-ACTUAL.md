@@ -42,7 +42,8 @@ profiles, workspaces, workspace_members, projects, project_members, tasks, subta
 - **UI:** filtros + visibles (10/25/50) en varias secciones; modo oscuro; header institucional; chips de selección en azul institucional; **botón 🔄 Actualizar** en el header (para la app instalada/PWA).
 
 ## Pendiente / próximos pasos
-1. **Correo de notificaciones** (lo siguiente que pidió el usuario): avisos de plazos/instrucciones por correo. Requiere cuenta gratuita **Resend** (100 correos/día) + Edge Function de envío + agendador (pg_cron). Código lo hace Claude; el usuario crea la cuenta.
+1. ✅ **Correo de notificaciones — LISTO (EmailJS, gratis).** Al crear una **instrucción**, se envía automáticamente un correo al funcionario (desde el Gmail institucional `fabricio.cespedes@cormudespa.cl`). Config pública en `index.html`: `EMAILJS_SERVICE_ID='service_s6qxmqd'`, `EMAILJS_TEMPLATE_ID='template_n2irt7h'`, `EMAILJS_PUBLIC_KEY='svCCRc_RyvR4r-GOK'` (los 3 son públicos/seguros). Plantilla EmailJS usa `{{subject}}`, `{{message}}`, `{{to_email}}`. Funciones: `mailReady()`, `enviarCorreo(toEmail,toName,subject,message)`, `memberEmail(id)`. Requisito: el funcionario debe tener **correo cargado** en su perfil. Límite plan gratis EmailJS ~200/mes.
+   - *(Opcional futuro)* alertas automáticas de plazos (vencimientos): requiere agendador (Supabase pg_cron) que dispare el envío; hoy el correo es solo al crear instrucción.
 2. (Opcional) Google Calendar **sincronización OAuth completa** (auto-push/2-vías): requiere Google Cloud + OAuth + verificación → más adelante; hoy resuelto con el enlace universal.
 3. (Opcional) Dominio propio gratis para GitHub Pages; Supabase Pro (~US$25/mes) por respaldos; a futuro reescritura a Next.js.
 
