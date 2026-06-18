@@ -1976,7 +1976,17 @@ document.getElementById('loginForm').addEventListener('submit',async e=>{e.preve
   err.classList.add('hidden');btn.disabled=true;const lbl=btn.textContent;btn.textContent='Ingresando…';
   try{
     const {data,error}=await sb.auth.signInWithPassword({email:em,password:pw});
-    if(error){err.textContent='Credenciales inválidas.';err.classList.remove('hidden');return;}
+    if(error){
+      const m=(error.message||'').toLowerCase(), st=error.status;
+      if(st===429||m.includes('rate')||m.includes('too many')||m.includes('seconds'))
+        err.textContent='Demasiados intentos seguidos. Espera unos minutos y vuelve a intentar, o usa «¿Olvidaste tu contraseña?».';
+      else if(m.includes('not confirmed')||m.includes('confirm'))
+        err.textContent='Tu cuenta aún no está activada. Avisa al administrador.';
+      else if(m.includes('invalid')||m.includes('credentials'))
+        err.textContent='Correo o contraseña incorrectos. Si no la recuerdas, usa «¿Olvidaste tu contraseña?».';
+      else err.textContent='No se pudo iniciar sesión: '+(error.message||'intenta nuevamente')+'.';
+      err.classList.remove('hidden');return;
+    }
     const ok=await afterAuth(data.user.id);
     if(!ok){err.textContent='Tu cuenta no tiene perfil asignado. Contacta al administrador.';err.classList.remove('hidden');await sb.auth.signOut();return;}
     showApp();
