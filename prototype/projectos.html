@@ -293,6 +293,7 @@ function renderEspacios(){REDRAW=renderEspacios;
         <div class="text-xs text-slate-500 mb-3">📁 ${np} proyectos · 📌 ${nd} tareas directas · 👥 ${w.userIds.length} usuarios</div>
         <div class="flex gap-2">
           <button onclick="entrarEspacio('${w.id}')" class="flex-1 rounded-lg ${active?'bg-slate-100 text-slate-500':'bg-inst text-white hover:bg-inst-dark'} text-sm font-medium py-2">${active?'Espacio actual':'Entrar al espacio'}</button>
+          ${(CURRENT.role==='admin'||CURRENT.id===w.leader)?`<button onclick="renombrarEspacio('${w.id}')" class="rounded-lg border border-slate-200 text-slate-600 hover:border-inst hover:text-inst text-sm px-3 py-2" title="Renombrar espacio">✏</button>`:''}
           ${(CURRENT.role==='admin'||CURRENT.id===w.leader)?`<button onclick="gestionarIntegrantes('${w.id}')" class="rounded-lg border border-slate-200 text-slate-600 hover:border-inst hover:text-inst text-sm px-3 py-2" title="Agregar / quitar integrantes">👥</button>`:''}
           ${(CURRENT.role==='admin'||CURRENT.id===w.leader)&&!w.primary?`<button onclick="delWorkspace('${w.id}')" class="rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-sm px-3 py-2" title="Eliminar espacio">🗑</button>`:''}
         </div>
@@ -300,6 +301,11 @@ function renderEspacios(){REDRAW=renderEspacios;
     </div></div>`;
 }
 function entrarEspacio(id){CURRENT_WS=id;buildNav();renderPanel();}
+function renombrarEspacio(wid){const w=WORKSPACES.find(x=>x.id===wid);if(!w)return;
+  if(!(CURRENT.role==='admin'||CURRENT.id===w.leader)){confirmModal('Acción no permitida','Solo el administrador o el líder puede renombrar el espacio.',()=>{},'Entendido');return;}
+  openModal('Renombrar espacio',[{name:'name',label:'Nombre del espacio',required:true,full:true,value:w.name}],
+  async d=>{const n=(d.name||'').trim();if(!n)return;const {error}=await sb.from('workspaces').update({name:n}).eq('id',wid);if(dbErr(error,'No se pudo renombrar el espacio'))return;await dbAct('renombró el espacio a',n);await loadAll();buildNav();renderEspacios();},'Guardar');
+}
 function delWorkspace(wid){
   const w=WORKSPACES.find(x=>x.id===wid);if(!w||w.primary)return;
   if(!(CURRENT.role==='admin'||CURRENT.id===w.leader))return;
