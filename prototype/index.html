@@ -1471,6 +1471,9 @@ function openProjectForm(editId){
       if(dbErr(error,'No se pudo crear el proyecto'))return;
       if(sel.usuarios.length){await sb.from('project_members').insert(sel.usuarios.map(u=>({project_id:np.id,profile_id:u})));}
       await dbAct('creó el proyecto',title);
+      sel.usuarios.filter(u=>u!==CURRENT.id && memberEmail(u)).forEach(u=>{
+        enviarCorreo(memberEmail(u),memberName(u),'📁 Nuevo proyecto: '+title,'Hola '+memberName(u).split(' ')[0]+',\n\nHas sido designado como responsable de un nuevo proyecto creado por '+CURRENT.name+':\n\n📁 «'+title+'»'+(payload.fin?'\n\n📅 Fecha de término: '+payload.fin:'')+(payload.descripcion?'\n\n📝 '+payload.descripcion:'')+'\n\nIngresa al sistema para revisarlo:\nhttps://fabriciocespedes-bit.github.io/gestor-proyectos-DAS/\n\n— DAS Control de Gestión Sanitaria\n\n⚠️ Este es un correo automático del sistema. Por favor no responder a esta dirección.');
+      });
       await loadAll(); renderProjects();
     }};
   document.getElementById('modalBackdrop').classList.remove('hidden');
