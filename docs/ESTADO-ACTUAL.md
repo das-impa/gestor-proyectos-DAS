@@ -7,12 +7,12 @@ App de gestión de proyectos/tareas/prioridades para la **Ilustre Municipalidad 
 **Híbrido:** sitio estático (1 archivo HTML) + **Supabase** (Auth + Postgres + RLS + Edge Functions). Todo persiste en Supabase. Piloto ~25 usuarios.
 
 ## ✅ EN VIVO (publicado y funcionando)
-- **URL pública:** `https://fabriciocespedes-bit.github.io/gestor-proyectos-DAS/`
+- **URL pública:** `https://das-impa.github.io/gestor-proyectos-DAS/` (movido a la organización institucional **das-impa**; la URL vieja `fabriciocespedes-bit.github.io` quedó con redirección).
 - **Hosting:** **GitHub Pages** (gratis). Auto-deploy en cada push vía `.github/workflows/deploy-pages.yml` (publica carpeta `prototype/`).
 - ⚠️ **Netlify quedó descartado** (el equipo se quedó "sin créditos" → deploys deshabilitados). Ya NO se usa.
 
 ## Repositorio
-- **GitHub:** `github.com/fabriciocespedes-bit/gestor-proyectos-DAS` · rama `main` · **PÚBLICO** (necesario para Pages gratis; no contiene secretos).
+- **GitHub:** `github.com/das-impa/gestor-proyectos-DAS` (organización **das-impa**) · rama `main` · **PÚBLICO** (necesario para Pages gratis; no contiene secretos). Remoto local ya apunta a esta URL.
 - **Archivo principal (fuente de verdad):** `prototype/projectos.html`. Tras cada edición: `cp prototype/projectos.html prototype/index.html`, verificar (preview_eval), commit + push.
 - App instalable como PWA: `prototype/logo-das.png` (ícono) + `prototype/manifest.json`. Título "DAS Control de Gestión Sanitaria".
 
