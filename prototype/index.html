@@ -1408,7 +1408,7 @@ function openRichForm(opts){
       const {data:row,error}=await sb.from('tasks').insert({task_key:'INS-'+n,workspace_id:CURRENT_WS,project_id:null,title:q,assignee_id:st.who,estado:'Pendiente',prioridad,vence,presupuesto:0,etiquetas:eti,origin:'instruccion',enviada_por:CURRENT.name}).select().single();
       if(dbErr(error,'No se pudo enviar la instrucción'))return;
       await dbAct('envió una instrucción a '+memberName(st.who).split(' ')[0],q);
-      enviarCorreo(memberEmail(st.who),memberName(st.who),'📌 Nueva instrucción de '+CURRENT.name,'Hola '+memberName(st.who).split(' ')[0]+',\n\nTienes una nueva instrucción asignada por '+CURRENT.name+':\n\n«'+q+'»'+(vence?'\n\n📅 Plazo: '+vence:'')+'\n\nIngresa al sistema para gestionarla:\nhttps://fabriciocespedes-bit.github.io/gestor-proyectos-DAS/\n\n— DAS Control de Gestión Sanitaria');
+      enviarCorreo(memberEmail(st.who),memberName(st.who),'📌 Nueva instrucción de '+CURRENT.name,'Hola '+memberName(st.who).split(' ')[0]+',\n\nTienes una nueva instrucción asignada por '+CURRENT.name+':\n\n«'+q+'»'+(vence?'\n\n📅 Plazo: '+vence:'')+'\n\nIngresa al sistema para gestionarla:\nhttps://fabriciocespedes-bit.github.io/gestor-proyectos-DAS/\n\n— DAS Control de Gestión Sanitaria\n\n⚠️ Este es un correo automático del sistema. Por favor no responder a esta dirección.');
     } else {
       const {data:row,error}=await sb.from('tasks').insert({task_key:(opts.projectId?'T-':'D-')+n,workspace_id:CURRENT_WS,project_id:opts.projectId||null,title:q,assignee_id:st.who,estado:opts.estado||'Pendiente',prioridad,vence,presupuesto:pres,etiquetas:eti,origin:opts.projectId?'propia':'directa'}).select().single();
       if(dbErr(error,'No se pudo crear la tarea'))return;
